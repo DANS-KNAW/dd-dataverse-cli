@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.stream.Stream;
 
 public class TestUtils {
     public static ListAppender<ILoggingEvent> captureLog(Level error, String loggerName) {
@@ -38,5 +39,15 @@ public class TestUtils {
         var outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
         return outContent;
+    }
+
+    public static ByteArrayOutputStream captureStderr() {
+        var outContent = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(outContent));
+        return outContent;
+    }
+
+    public static Stream<String> messagesOf(ListAppender<ILoggingEvent> logged) {
+        return logged.list.stream().map(iLoggingEvent -> iLoggingEvent.getLevel() + "  " + iLoggingEvent.getFormattedMessage());
     }
 }
