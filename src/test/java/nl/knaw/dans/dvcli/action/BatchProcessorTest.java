@@ -40,46 +40,7 @@ public class BatchProcessorTest {
     }
 
     @Test
-    public void test() {
-        var datasetApi1 = Mockito.mock(DatasetApi.class);
-        var datasetApi2 = Mockito.mock(DatasetApi.class);
-
-        var stdout = TestUtils.captureStdout();
-        var stderr = TestUtils.captureStderr();
-        var logged = TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
-
-        BatchProcessor.<DatasetApi, String> builder()
-            .labeledItems(List.of(
-                new Pair<>("1", datasetApi1),
-                new Pair<>("2", datasetApi2)
-            ))
-            .action(Object::toString)
-            .report(new ConsoleReport<>())
-            .delay(1L)
-            .build()
-            .process();
-
-        assertThat(stderr.toString())
-            .isEqualTo("1: OK. 2: OK. ");
-        assertThat(stdout.toString().split("\n"))
-            .containsExactly("INFO  Starting batch processing",
-                "INFO  Processing item 1 of 2",
-                datasetApi1.toString(),
-                "DEBUG Sleeping for 1 ms",
-                "INFO  Processing item 2 of 2",
-                datasetApi2.toString(),
-                "INFO  Finished batch processing"
-            );
-        assertThat(TestUtils.messagesOf(logged))
-            .containsExactly("INFO  Starting batch processing",
-                "INFO  Processing item 1 of 2",
-                "DEBUG  Sleeping for 1 ms",
-                "INFO  Processing item 2 of 2",
-                "INFO  Finished batch processing");
-    }
-
-    @Test
-    public void test_should() {
+    public void batchProcessor_should_continue_after_failure() {
         var datasetApi1 = Mockito.mock(DatasetApi.class);
         var datasetApi2 = Mockito.mock(DatasetApi.class);
         var datasetApi3 = Mockito.mock(DatasetApi.class);
@@ -90,9 +51,9 @@ public class BatchProcessorTest {
 
         BatchProcessor.<DatasetApi, String> builder()
             .labeledItems(List.of(
-                new Pair<>("1", datasetApi1),
-                new Pair<>("2", datasetApi2),
-                new Pair<>("2", datasetApi3)
+                new Pair<>("a", datasetApi1),
+                new Pair<>("b", datasetApi2),
+                new Pair<>("c", datasetApi3)
             ))
             .action(datasetApi -> {
                 if (!datasetApi.equals(datasetApi2))
@@ -107,20 +68,20 @@ public class BatchProcessorTest {
 
         assertThat(stderr.toString())
             .isEqualTo("""
-                1: OK. 2: FAILED: Exception type = RuntimeException, message = test
-                2: OK.""" + " "); // java text block trims trailing spaces
-        assertThat(stdout.toString().split("\n"))
-            .containsExactly("INFO  Starting batch processing",
-                "INFO  Processing item 1 of 3",
-                "ok",
-                "DEBUG Sleeping for 1 ms",
-                "INFO  Processing item 2 of 3",
-                "DEBUG Sleeping for 1 ms",
-                "INFO  Processing item 3 of 3",
-                "ok",
-                "INFO  Finished batch processing"
-                );
-            assertThat(TestUtils.messagesOf(logged))
+                           a: OK. b: FAILED: Exception type = RuntimeException, message = test
+                           c: OK.""" + " "); // java text block trims trailing spaces
+        assertThat(stdout.toString()).isEqualTo("""
+            INFO  Starting batch processing
+            INFO  Processing item 1 of 3
+            ok
+            DEBUG Sleeping for 1 ms
+            INFO  Processing item 2 of 3
+            DEBUG Sleeping for 1 ms
+            INFO  Processing item 3 of 3
+            ok
+            INFO  Finished batch processing
+            """);
+        assertThat(TestUtils.messagesOf(logged))
             .containsExactly("INFO  Starting batch processing",
                 "INFO  Processing item 1 of 3",
                 "DEBUG  Sleeping for 1 ms",
@@ -130,4 +91,75 @@ public class BatchProcessorTest {
                 "INFO  Finished batch processing");
     }
 
+    @Test
+    public void batchProcessor_sleep_a_default_amount_of_time_only_between_processing() {
+        var datasetApi1 = Mockito.mock(DatasetApi.class);
+        var datasetApi2 = Mockito.mock(DatasetApi.class);
+        var datasetApi3 = Mockito.mock(DatasetApi.class);
+
+        var stdout = TestUtils.captureStdout();
+        var stderr = TestUtils.captureStderr();
+        TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
+
+        BatchProcessor.<DatasetApi, String> builder()
+            .labeledItems(List.of(
+                new Pair<>("a", datasetApi1),
+                new Pair<>("b", datasetApi2),
+                new Pair<>("c", datasetApi3)
+            ))
+            .action(datasetApi -> "ok")
+            .report(new ConsoleReport<>())
+            .build()
+            .process();
+
+        assertThat(stderr.toString())
+            .isEqualTo("a: OK. b: OK. c: OK. ");
+        assertThat(stdout.toString()).isEqualTo("""
+            INFO  Starting batch processing
+            INFO  Processing item 1 of 3
+            ok
+            DEBUG Sleeping for 1000 ms
+            INFO  Processing item 2 of 3
+            ok
+            DEBUG Sleeping for 1000 ms
+            INFO  Processing item 3 of 3
+            ok
+            INFO  Finished batch processing
+            """);
+    }
+
+    @Test
+    public void batchProcessor_should_not_report_sleeping() {
+        var datasetApi1 = Mockito.mock(DatasetApi.class);
+        var datasetApi2 = Mockito.mock(DatasetApi.class);
+        var datasetApi3 = Mockito.mock(DatasetApi.class);
+
+        var stdout = TestUtils.captureStdout();
+        var stderr = TestUtils.captureStderr();
+        TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
+
+        BatchProcessor.<DatasetApi, String> builder()
+            .labeledItems(List.of(
+                new Pair<>("A", datasetApi1),
+                new Pair<>("B", datasetApi2),
+                new Pair<>("C", datasetApi3)
+            ))
+            .action(datasetApi -> "ok")
+            .delay(0L)
+            .report(new ConsoleReport<>())
+            .build()
+            .process();
+
+        assertThat(stderr.toString()).isEqualTo("A: OK. B: OK. C: OK. ");
+        assertThat(stdout.toString()).isEqualTo("""
+            INFO  Starting batch processing
+            INFO  Processing item 1 of 3
+            ok
+            INFO  Processing item 2 of 3
+            ok
+            INFO  Processing item 3 of 3
+            ok
+            INFO  Finished batch processing
+            """);
+    }
 }
