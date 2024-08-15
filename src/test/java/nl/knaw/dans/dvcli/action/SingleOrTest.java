@@ -17,7 +17,6 @@ package nl.knaw.dans.dvcli.action;
 
 import nl.knaw.dans.dvcli.AbstractTestWithTestDir;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
-import nl.knaw.dans.lib.dataverse.DataverseApi;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
 import org.assertj.core.api.Assertions;
@@ -26,12 +25,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static nl.knaw.dans.dvcli.action.SingleIdOrIdsFile.DEFAULT_TARGET_PLACEHOLDER;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -41,6 +40,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+@SuppressWarnings({ "unchecked", "rawtypes" }) // for mapSecondToString
 public class SingleOrTest extends AbstractTestWithTestDir {
     // SingleDatasetOrDatasetsFile implicitly tests SingleIdOrIdsFile
     // SingleCollectionOrCollectionsFile too and has little to add
@@ -52,18 +52,8 @@ public class SingleOrTest extends AbstractTestWithTestDir {
         System.setIn(originalStdin);
     }
 
-    @Test
-    public void getCollections_should_return_single_value() throws Exception {
-        var alias = "xyz";
-
-        var collections = new SingleCollectionOrCollectionsFile(alias, getClient())
-            .getCollections().toList();
-
-        assertThat(collections).hasSize(1);
-        var kv = collections.get(0);
-        assertThat(kv.getFirst()).isEqualTo(alias);
-        assertThat(kv.getSecond()).isInstanceOf(DataverseApi.class);
-        // TODO a DataverseApi.toString() showing the subPath would be nice
+    public static <A> Stream<Pair<String, A>> mapSecondToString(List<Pair<String, A>> collections) {
+        return collections.stream().map(p -> new Pair(p.getFirst(), p.getSecond().toString()));
     }
 
     private static DataverseClient getClient() throws URISyntaxException {
@@ -72,7 +62,18 @@ public class SingleOrTest extends AbstractTestWithTestDir {
     }
 
     @Test
-    public void getPids_should_return_placeHolder() throws IOException {
+    public void getCollections_should_return_single_value() throws Exception {
+
+        var collections = new SingleCollectionOrCollectionsFile("xyz", getClient())
+            .getCollections().toList();
+
+        assertThat(mapSecondToString(collections)).containsExactly(
+            new Pair("xyz", "DataverseApi(subPath=api/dataverses/xyz)")
+        );
+    }
+
+    @Test
+    public void getPids_should_return_placeHolder() throws Exception {
         var pids = new SingleIdOrIdsFile(DEFAULT_TARGET_PLACEHOLDER, "default")
             .getPids();
         Assertions.assertThat(pids)
@@ -80,33 +81,15 @@ public class SingleOrTest extends AbstractTestWithTestDir {
     }
 
     @Test
-    public void getDatasetIds_should_return_single_dataset_in_aList() throws IOException {
-        var pid = "1";
-
-        var dataverseClient = mock(DataverseClient.class);
-        var dataset = mock(DatasetApi.class);
-        // note that a numeric value is used for the API call
-        Mockito.when(dataverseClient.dataset(1)).thenReturn(dataset);
-
-        var datasets = new SingleDatasetOrDatasetsFile(pid, dataverseClient)
-            .getDatasets();
-        assertThat(datasets).containsExactly(new Pair<>(pid, dataset));
-
-        verify(dataverseClient, times(1)).dataset(1);
-        verifyNoMoreInteractions(dataverseClient);
+    public void getDatasetIds_should_return_single_dataset_in_aList() throws Exception {
+        var datasets = new SingleDatasetOrDatasetsFile("1", getClient())
+            .getDatasets().toList();
+        assertThat(mapSecondToString(datasets))
+            .containsExactly(new Pair("1", "DatasetApi(id='1, isPersistentId=false)"));
     }
 
     @Test
-    public void getDatasets_should_parse_file_with_white_space() throws IOException {
-
-        var dataverseClient = mock(DataverseClient.class);
-
-        var datasetA = mock(DatasetApi.class);
-        Mockito.when(dataverseClient.dataset("a")).thenReturn(datasetA);
-        var datasetBlabla = mock(DatasetApi.class);
-        Mockito.when(dataverseClient.dataset("blabla")).thenReturn(datasetBlabla);
-        var dataset1 = mock(DatasetApi.class); // note the numeric value
-        Mockito.when(dataverseClient.dataset(1)).thenReturn(dataset1);
+    public void getDatasets_should_parse_file_with_white_space() throws Exception {
 
         var filePath = testDir.resolve("ids.txt");
         Files.createDirectories(testDir);
@@ -114,34 +97,18 @@ public class SingleOrTest extends AbstractTestWithTestDir {
             a blabla
             1""");
 
-        var datasets = new SingleDatasetOrDatasetsFile(filePath.toString(), dataverseClient)
-            .getDatasets();
-        Assertions.assertThat(datasets.toList())
-            .containsExactlyInAnyOrderElementsOf(List.of(
-                new Pair<>("a", datasetA),
-                new Pair<>("1", dataset1),
-                new Pair<>("blabla", datasetBlabla)
-            ));
+        var datasets = new SingleDatasetOrDatasetsFile(filePath.toString(), getClient())
+            .getDatasets().toList();
 
-        verify(dataverseClient, times(1)).dataset("a");
-        verify(dataverseClient, times(1)).dataset(1);
-        verify(dataverseClient, times(1)).dataset("blabla");
-        verifyNoMoreInteractions(dataverseClient);
+        assertThat(mapSecondToString(datasets)).containsExactly(
+            new Pair("a", "DatasetApi(id='a, isPersistentId=true)"),
+            new Pair("blabla", "DatasetApi(id='blabla, isPersistentId=true)"),
+            new Pair("1", "DatasetApi(id='1, isPersistentId=false)")
+        );
     }
 
     @Test
-    public void getDatasets_should_parse_stdin_and_return_empty_lines() throws IOException {
-
-        var dataverseClient = mock(DataverseClient.class);
-
-        var datasetA = mock(DatasetApi.class);
-        Mockito.when(dataverseClient.dataset("A")).thenReturn(datasetA);
-        var datasetBlank = mock(DatasetApi.class);
-        Mockito.when(dataverseClient.dataset("")).thenReturn(datasetBlank);
-        var datasetBlabla = mock(DatasetApi.class);
-        Mockito.when(dataverseClient.dataset("rabarbera")).thenReturn(datasetBlabla);
-        var dataset1 = mock(DatasetApi.class);
-        Mockito.when(dataverseClient.dataset("B")).thenReturn(dataset1);
+    public void getDatasets_should_parse_stdin_and_return_empty_lines() throws Exception {
 
         System.setIn(new ByteArrayInputStream("""
             A
@@ -150,26 +117,20 @@ public class SingleOrTest extends AbstractTestWithTestDir {
                         
             """.getBytes()));
 
-        var datasets = new SingleDatasetOrDatasetsFile("-", dataverseClient)
-            .getDatasets();
-        Assertions.assertThat(datasets.toList())
-            .containsExactlyInAnyOrderElementsOf(List.of(
-                new Pair<>("A", datasetA),
-                new Pair<>("B", dataset1),
-                new Pair<>("rabarbera", datasetBlabla),
-                new Pair<>("", datasetBlank),
-                new Pair<>("", datasetBlank)
-            ));
-
-        verify(dataverseClient, times(1)).dataset("A");
-        verify(dataverseClient, times(1)).dataset("B");
-        verify(dataverseClient, times(1)).dataset("rabarbera");
-        verify(dataverseClient, times(2)).dataset("");
-        verifyNoMoreInteractions(dataverseClient);
+        var datasets = new SingleDatasetOrDatasetsFile("-", getClient())
+            .getDatasets().toList();
+        assertThat(mapSecondToString(datasets)).containsExactly(
+            new Pair("A", "DatasetApi(id='A, isPersistentId=true)"),
+            new Pair("", "DatasetApi(id=', isPersistentId=true)"),
+            new Pair("B", "DatasetApi(id='B, isPersistentId=true)"),
+            new Pair("rabarbera", "DatasetApi(id='rabarbera, isPersistentId=true)"),
+            new Pair("", "DatasetApi(id=', isPersistentId=true)")
+        );
     }
 
     @Test
-    public void getDatasets_should_read_until_Exception() throws IOException {
+    @SuppressWarnings("ResultOfMethodCallIgnored") // for toList in assertThatThrownBy
+    public void getDatasets_should_read_until_Exception() throws Exception {
 
         var dataverseClient = mock(DataverseClient.class);
 
