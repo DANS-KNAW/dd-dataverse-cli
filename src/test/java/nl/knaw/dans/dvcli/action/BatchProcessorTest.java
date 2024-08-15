@@ -16,21 +16,36 @@
 package nl.knaw.dans.dvcli.action;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import nl.knaw.dans.dvcli.TestUtils;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BatchProcessorTest {
 
     private final PrintStream originalStdout = System.out;
     private final PrintStream originalStderr = System.err;
+    private OutputStream stdout;
+    private OutputStream stderr;
+    private ListAppender<ILoggingEvent> logged;
+
+    @BeforeEach
+    public void setUp() {
+        stdout = TestUtils.captureStdout();
+        stderr = TestUtils.captureStderr();
+        logged = TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
+    }
 
     @AfterEach
     public void tearDown() {
@@ -41,19 +56,13 @@ public class BatchProcessorTest {
 
     @Test
     public void batchProcessor_should_continue_after_failure() {
-        var datasetApi1 = Mockito.mock(DatasetApi.class);
         var datasetApi2 = Mockito.mock(DatasetApi.class);
-        var datasetApi3 = Mockito.mock(DatasetApi.class);
-
-        var stdout = TestUtils.captureStdout();
-        var stderr = TestUtils.captureStderr();
-        var logged = TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
 
         BatchProcessor.<DatasetApi, String> builder()
             .labeledItems(List.of(
-                new Pair<>("a", datasetApi1),
+                new Pair<>("a", Mockito.mock(DatasetApi.class)),
                 new Pair<>("b", datasetApi2),
-                new Pair<>("c", datasetApi3)
+                new Pair<>("c", Mockito.mock(DatasetApi.class))
             ))
             .action(datasetApi -> {
                 if (!datasetApi.equals(datasetApi2))
@@ -93,19 +102,11 @@ public class BatchProcessorTest {
 
     @Test
     public void batchProcessor_sleep_a_default_amount_of_time_only_between_processing() {
-        var datasetApi1 = Mockito.mock(DatasetApi.class);
-        var datasetApi2 = Mockito.mock(DatasetApi.class);
-        var datasetApi3 = Mockito.mock(DatasetApi.class);
-
-        var stdout = TestUtils.captureStdout();
-        var stderr = TestUtils.captureStderr();
-        TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
-
         BatchProcessor.<DatasetApi, String> builder()
             .labeledItems(List.of(
-                new Pair<>("a", datasetApi1),
-                new Pair<>("b", datasetApi2),
-                new Pair<>("c", datasetApi3)
+                new Pair<>("a", Mockito.mock(DatasetApi.class)),
+                new Pair<>("b", Mockito.mock(DatasetApi.class)),
+                new Pair<>("c", Mockito.mock(DatasetApi.class))
             ))
             .action(datasetApi -> "ok")
             .report(new ConsoleReport<>())
@@ -130,19 +131,11 @@ public class BatchProcessorTest {
 
     @Test
     public void batchProcessor_should_not_report_sleeping() {
-        var datasetApi1 = Mockito.mock(DatasetApi.class);
-        var datasetApi2 = Mockito.mock(DatasetApi.class);
-        var datasetApi3 = Mockito.mock(DatasetApi.class);
-
-        var stdout = TestUtils.captureStdout();
-        var stderr = TestUtils.captureStderr();
-        TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
-
         BatchProcessor.<DatasetApi, String> builder()
             .labeledItems(List.of(
-                new Pair<>("A", datasetApi1),
-                new Pair<>("B", datasetApi2),
-                new Pair<>("C", datasetApi3)
+                new Pair<>("A", Mockito.mock(DatasetApi.class)),
+                new Pair<>("B", Mockito.mock(DatasetApi.class)),
+                new Pair<>("C", Mockito.mock(DatasetApi.class))
             ))
             .action(datasetApi -> "ok")
             .delay(0L)
@@ -160,6 +153,28 @@ public class BatchProcessorTest {
             INFO  Processing item 3 of 3
             ok
             INFO  Finished batch processing
+            """);
+    }
+
+    @Test
+    public void batchProcessor_should_throw_on_missing_report() {
+        var processor = BatchProcessor.<DatasetApi, String> builder()
+            .labeledItems(List.of(
+                new Pair<>("A", Mockito.mock(DatasetApi.class)),
+                new Pair<>("B", Mockito.mock(DatasetApi.class)),
+                new Pair<>("C", Mockito.mock(DatasetApi.class))
+            ))
+            .action(datasetApi -> "ok")
+            .build();
+        assertThatThrownBy(processor::process)
+            .isInstanceOf(NullPointerException.class)
+            .hasMessage("""
+                Cannot invoke "nl.knaw.dans.dvcli.action.Report.reportFailure(String, Object, java.lang.Exception)" because "this.report" is null""");
+
+        assertThat(stderr.toString()).isEqualTo("");
+        assertThat(stdout.toString()).isEqualTo("""
+            INFO  Starting batch processing
+            INFO  Processing item 1 of 3
             """);
     }
 }
