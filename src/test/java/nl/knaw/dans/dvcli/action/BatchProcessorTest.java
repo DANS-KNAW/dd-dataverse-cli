@@ -89,7 +89,7 @@ public class BatchProcessorTest {
             DEBUG Sleeping for 1 ms
             INFO  Processing item 3 of 3
             ok
-            INFO  Finished batch processing
+            INFO  Finished batch processing of 3 items
             """);
         assertThat(TestUtils.messagesOf(logged))
             .containsExactly("INFO  Starting batch processing",
@@ -98,7 +98,7 @@ public class BatchProcessorTest {
                 "INFO  Processing item 2 of 3",
                 "DEBUG  Sleeping for 1 ms",
                 "INFO  Processing item 3 of 3",
-                "INFO  Finished batch processing");
+                "INFO  Finished batch processing of 3 items");
     }
 
     @Test
@@ -126,7 +126,7 @@ public class BatchProcessorTest {
             DEBUG Sleeping for 1000 ms
             INFO  Processing item 3 of 3
             ok
-            INFO  Finished batch processing
+            INFO  Finished batch processing of 3 items
             """);
     }
 
@@ -153,73 +153,80 @@ public class BatchProcessorTest {
             ok
             INFO  Processing item 3 of 3
             ok
-            INFO  Finished batch processing
+            INFO  Finished batch processing of 3 items
             """);
     }
 
     @Test
-    public void batchProcessor_fails_fast_on_missing_report() {
-        var processor = BatchProcessor.<DatasetApi, String> builder()
+    public void batchProcessor_uses_a_default_report() {
+        BatchProcessor.<DatasetApi, String> builder()
             .labeledItems(List.of(
-                new Pair<>("A", Mockito.mock(DatasetApi.class)),
-                new Pair<>("B", Mockito.mock(DatasetApi.class)),
-                new Pair<>("C", Mockito.mock(DatasetApi.class))
+                new Pair<>("X", Mockito.mock(DatasetApi.class)),
+                new Pair<>("Y", Mockito.mock(DatasetApi.class)),
+                new Pair<>("Z", Mockito.mock(DatasetApi.class))
             ))
             .action(datasetApi -> "ok")
-            .build();
-        assertThatThrownBy(processor::process)
-            .isInstanceOf(NullPointerException.class)
-            .hasMessage("""
-                Cannot invoke "nl.knaw.dans.dvcli.action.Report.reportFailure(String, Object, java.lang.Exception)" because "this.report" is null""");
+            .delay(0L)
+            .build()
+            .process();
+
+        assertThat(stderr.toString()).isEqualTo("X: OK. Y: OK. Z: OK. ");
+        assertThat(stdout.toString()).isEqualTo("""
+            INFO  Starting batch processing
+            INFO  Processing item 1 of 3
+            ok
+            INFO  Processing item 2 of 3
+            ok
+            INFO  Processing item 3 of 3
+            ok
+            INFO  Finished batch processing of 3 items
+            """);
+    }
+
+    @Test
+    public void batchProcessor_reports_empty_list() {
+        BatchProcessor.<DatasetApi, String> builder()
+            .labeledItems(List.of())
+            .action(datasetApi -> "ok")
+            .report(new ConsoleReport<>())
+            .build()
+            .process();
 
         assertThat(stderr.toString()).isEqualTo("");
         assertThat(stdout.toString()).isEqualTo("""
             INFO  Starting batch processing
-            INFO  Processing item 1 of 3
+            INFO  Finished batch processing of 0 items
             """);
+        assertThat(TestUtils.messagesOf(logged)).containsExactly(
+            "INFO  Starting batch processing",
+            "INFO  Finished batch processing of 0 items");
     }
 
     @Test
-    public void batchProcessor_does_not_fail_on_empty_list() {
-        var processor = BatchProcessor.<DatasetApi, String> builder()
-            .labeledItems(new ArrayList<>())
-            .report(new ConsoleReport<>())
-            .build();
-        processor.process();
-
-        assertThat(stderr.toString()).isEqualTo("");
-    }
-
-    @Test
-    public void batchProcessor_does_not_fail_fast_on_missing_action() {
-        var processor = BatchProcessor.<DatasetApi, String> builder()
-            .labeledItems(List.of(
-                new Pair<>("A", Mockito.mock(DatasetApi.class)),
-                new Pair<>("B", Mockito.mock(DatasetApi.class)),
-                new Pair<>("C", Mockito.mock(DatasetApi.class))
-            ))
-            .report(new ConsoleReport<>())
-            .build();
-        processor.process();
-
-        assertThat(stderr.toString()).isEqualTo("""
-            A: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.dvcli.action.ThrowingFunction.apply(Object)" because "this.action" is null
-            B: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.dvcli.action.ThrowingFunction.apply(Object)" because "this.action" is null
-            C: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.dvcli.action.ThrowingFunction.apply(Object)" because "this.action" is null
-            """);
-    }
-
-    @Test
-    public void batchProcessor_fails_fast_on_missing_list() {
+    public void batchProcessor_throws_on_missing_list() {
         var processor = BatchProcessor.<DatasetApi, String> builder()
             .action(datasetApi -> "ok")
-            .report(new ConsoleReport<>())
-            .build();
-        assertThatThrownBy(processor::process)
+            .report(new ConsoleReport<>());
+
+        assertThatThrownBy(processor::build)
             .isInstanceOf(NullPointerException.class)
-            .hasMessage("""
-                Cannot invoke "java.util.List.iterator()" because "this.labeledItems" is null""");
+            .hasMessage("labeledItems is marked non-null but is null");
 
         assertThat(stderr.toString()).isEqualTo("");
+        assertThat(stdout.toString()).isEqualTo("");
+        assertThat(TestUtils.messagesOf(logged)).containsExactly();
+    }
+
+    @Test
+    public void batchProcessor_fails_fast_on_missing_action() {
+        var processor = BatchProcessor.<DatasetApi, String> builder()
+            .labeledItems(List.of());
+        assertThatThrownBy(processor::build)
+            .isInstanceOf(NullPointerException.class)
+            .hasMessage("action is marked non-null but is null");
+
+        assertThat(stderr.toString()).isEqualTo("");
+        assertThat(stdout.toString()).isEqualTo("");
+        assertThat(TestUtils.messagesOf(logged)).containsExactly();
     }
 }

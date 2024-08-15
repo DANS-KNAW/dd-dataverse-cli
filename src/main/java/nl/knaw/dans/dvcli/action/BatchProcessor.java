@@ -16,6 +16,7 @@
 package nl.knaw.dans.dvcli.action;
 
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -34,17 +35,20 @@ public class BatchProcessor<I, R> {
     /**
      * The labeled items to process.
      */
+    @NonNull
     private final List<Pair<String, I>> labeledItems;
 
     /**
      * The action to apply to each item.
      */
+    @NonNull
     private final ThrowingFunction<I, R, Exception> action;
 
     /**
      * The report to which the results of the actions are reported.
      */
-    private final Report<I, R> report;
+    @Builder.Default
+    private final Report<I, R> report = new ConsoleReport<>();
 
     /**
      * The delay in milliseconds between processing items. A delay of 0 or less means no delay.
@@ -60,7 +64,7 @@ public class BatchProcessor<I, R> {
             log.info("Processing item {} of {}", ++i, labeledItems.size());
             callAction(labeledItem.getFirst(), labeledItem.getSecond());
         }
-        log.info("Finished batch processing");
+        log.info("Finished batch processing of {} items", labeledItems.size());
     }
 
     private void callAction(String label, I item) {
