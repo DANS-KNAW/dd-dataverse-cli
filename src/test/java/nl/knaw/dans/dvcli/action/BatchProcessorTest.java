@@ -27,6 +27,7 @@ import org.mockito.Mockito;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -157,7 +158,7 @@ public class BatchProcessorTest {
     }
 
     @Test
-    public void batchProcessor_should_throw_on_missing_report() {
+    public void batchProcessor_fails_fast_on_missing_report() {
         var processor = BatchProcessor.<DatasetApi, String> builder()
             .labeledItems(List.of(
                 new Pair<>("A", Mockito.mock(DatasetApi.class)),
@@ -176,5 +177,49 @@ public class BatchProcessorTest {
             INFO  Starting batch processing
             INFO  Processing item 1 of 3
             """);
+    }
+
+    @Test
+    public void batchProcessor_does_not_fail_on_empty_list() {
+        var processor = BatchProcessor.<DatasetApi, String> builder()
+            .labeledItems(new ArrayList<>())
+            .report(new ConsoleReport<>())
+            .build();
+        processor.process();
+
+        assertThat(stderr.toString()).isEqualTo("");
+    }
+
+    @Test
+    public void batchProcessor_does_not_fail_fast_on_missing_action() {
+        var processor = BatchProcessor.<DatasetApi, String> builder()
+            .labeledItems(List.of(
+                new Pair<>("A", Mockito.mock(DatasetApi.class)),
+                new Pair<>("B", Mockito.mock(DatasetApi.class)),
+                new Pair<>("C", Mockito.mock(DatasetApi.class))
+            ))
+            .report(new ConsoleReport<>())
+            .build();
+        processor.process();
+
+        assertThat(stderr.toString()).isEqualTo("""
+            A: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.dvcli.action.ThrowingFunction.apply(Object)" because "this.action" is null
+            B: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.dvcli.action.ThrowingFunction.apply(Object)" because "this.action" is null
+            C: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.dvcli.action.ThrowingFunction.apply(Object)" because "this.action" is null
+            """);
+    }
+
+    @Test
+    public void batchProcessor_fails_fast_on_missing_list() {
+        var processor = BatchProcessor.<DatasetApi, String> builder()
+            .action(datasetApi -> "ok")
+            .report(new ConsoleReport<>())
+            .build();
+        assertThatThrownBy(processor::process)
+            .isInstanceOf(NullPointerException.class)
+            .hasMessage("""
+                Cannot invoke "java.util.List.iterator()" because "this.labeledItems" is null""");
+
+        assertThat(stderr.toString()).isEqualTo("");
     }
 }
