@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 import static nl.knaw.dans.dvcli.action.SingleIdOrIdsFile.DEFAULT_TARGET_PLACEHOLDER;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -105,6 +107,16 @@ public class SingleOrTest extends AbstractTestWithTestDir {
             new Pair("blabla", "DatasetApi(id='blabla, isPersistentId=true)"),
             new Pair("1", "DatasetApi(id='1, isPersistentId=false)")
         );
+    }
+
+    @Test
+    public void getDatasets_should_throw_when_parsing_a_directory() throws Exception {
+
+        var datasets = new SingleDatasetOrDatasetsFile("target", getClient())
+            .getDatasets();
+        var exception = assertThrows(RuntimeException.class, datasets::toList);
+        assertThat( exception.getMessage())
+            .isEqualTo("java.io.IOException: Is a directory");
     }
 
     @Test

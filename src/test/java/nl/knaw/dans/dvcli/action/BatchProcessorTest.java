@@ -27,7 +27,6 @@ import org.mockito.Mockito;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,16 +56,16 @@ public class BatchProcessorTest {
 
     @Test
     public void batchProcessor_should_continue_after_failure() {
-        var datasetApi2 = Mockito.mock(DatasetApi.class);
+        var mockedDatasetApi = Mockito.mock(DatasetApi.class);
 
         BatchProcessor.<DatasetApi, String> builder()
             .labeledItems(List.of(
                 new Pair<>("a", Mockito.mock(DatasetApi.class)),
-                new Pair<>("b", datasetApi2),
+                new Pair<>("b", mockedDatasetApi),
                 new Pair<>("c", Mockito.mock(DatasetApi.class))
             ))
             .action(datasetApi -> {
-                if (!datasetApi.equals(datasetApi2))
+                if (!datasetApi.equals(mockedDatasetApi))
                     return "ok";
                 else
                     throw new RuntimeException("test");
