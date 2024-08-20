@@ -5,6 +5,8 @@ import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.lib.dataverse.DataverseApi;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
+import nl.knaw.dans.lib.dataverse.DataverseHttpResponse;
+import nl.knaw.dans.lib.dataverse.model.dataset.DatasetCreationResult;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -13,6 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class CollectionCreateDatasetTest extends AbstractCapturingTest {
     @Test
@@ -54,12 +61,18 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
 
         var metadataKeys = new HashMap<String, String>();
 
-        // TODO mock response properly, CollectionAssignRole would be more interesting to test
-        var api = Mockito.mock(DataverseApi.class);
-        Mockito.when(api.createDataset("A", metadataKeys)).thenReturn(null);
-        Mockito.when(api.createDataset("B", metadataKeys)).thenReturn(null);
+        DataverseHttpResponse<DatasetCreationResult> responseA = Mockito.mock(DataverseHttpResponse.class);
+        DataverseHttpResponse<DatasetCreationResult> responseB = Mockito.mock(DataverseHttpResponse.class);
+        Mockito.when(responseA.getEnvelopeAsString()).thenReturn("some string");
+        Mockito.when(responseB.getEnvelopeAsString()).thenReturn("some other string");
 
-        var cmd = getCmd(
+        var api = Mockito.mock(DataverseApi.class);
+        Mockito.when(api.createDataset(eq("A"), any())).thenReturn(null);
+        Mockito.when(api.createDataset(eq("B"), any())).thenReturn(responseB);
+        // TODO the two when's above are not effective, working around as below
+        Mockito.when(api.createDataset((String) any(), any())).thenReturn(responseA);
+
+        CollectionCreateDataset cmd = getCmd(
             metadataKeys,
             List.of(
                 new Pair<>("A", api),
@@ -70,20 +83,18 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
         // method under test
         cmd.doCall();
 
+        assertThat(stderr.toString()).isEqualTo("A: OK. B: OK. ");
         assertThat(stdout.toString()).isEqualTo("""
             INFO  Starting batch processing
             INFO  Processing item 1 of 2
+            some string
             INFO  Processing item 2 of 2
+            some string
             INFO  Finished batch processing of 2 items
             """);
-        assertThat(stderr.toString()).isEqualTo("""
-            A: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.lib.dataverse.DataverseHttpResponse.getEnvelopeAsString()" because "r" is null
-            B: FAILED: Exception type = NullPointerException, message = Cannot invoke "nl.knaw.dans.lib.dataverse.DataverseHttpResponse.getEnvelopeAsString()" because "r" is null
-            """);
 
-        //        verify(api, times(1)).createDataset("A", any());
-        //        verify(api, times(1)).createDataset("B");
-        //        verifyNoMoreInteractions(api);
+        verify(api, times(2)).createDataset((String) any(), any());
+        verifyNoMoreInteractions(api);
     }
 
     private static CollectionCreateDataset getCmd(HashMap<String, String> metadataKeys, final List<Pair<String, DataverseApi>> pairs) throws NoSuchFieldException, IllegalAccessException {
