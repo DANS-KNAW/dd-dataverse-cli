@@ -19,7 +19,9 @@ import lombok.NonNull;
 import nl.knaw.dans.dvcli.action.BatchProcessor;
 import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.dvcli.action.SingleIdOrIdsFile;
+import nl.knaw.dans.dvcli.action.ThrowingFunction;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
+import nl.knaw.dans.lib.dataverse.DataverseException;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -48,15 +50,23 @@ public abstract class AbstractSubcommandContainer<T> extends AbstractCmd {
             .labeledItems(getItems())
             .delay(delay);
     }
-    
-    protected <P> BatchProcessor.BatchProcessorBuilder<P, String> paramsBatchProcessorBuilder() throws IOException {
+
+    protected <P> BatchProcessor.BatchProcessorBuilder<P, String> paramsBatchProcessorBuilder() {
         return BatchProcessor.<P, String> builder()
             .delay(delay);
     }
 
     protected abstract List<Pair<String, T>> getItems() throws IOException;
- 
+
     @Override
-    public void doCall() {
+    public void doCall() throws IOException, DataverseException {
+    }
+
+    public BatchProcessor<T, String> batchProcessor(ThrowingFunction<T, String, Exception> action) throws IOException {
+        return BatchProcessor.<T, String> builder()
+            .labeledItems(getItems())
+            .delay(delay)
+            .action(action)
+            .build();
     }
 }
