@@ -101,7 +101,7 @@ public class SingleOrTest extends AbstractTestWithTestDir {
     }
 
     @Test
-    public void getDatasets_should_throw_when_parsing_a_directory() throws Exception {
+    public void getDatasets_should_throw_when_parsing_a_directory() {
 
         var ids = new SingleDatasetOrDatasetsFile("target", new DataverseClient(null));
         assertThatThrownBy(ids::getDatasets)

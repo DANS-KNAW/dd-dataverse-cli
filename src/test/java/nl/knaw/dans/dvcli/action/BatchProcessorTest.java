@@ -15,18 +15,23 @@
  */
 package nl.knaw.dans.dvcli.action;
 
-import nl.knaw.dans.dvcli.TestUtils;
-import nl.knaw.dans.dvcli.command.AbstractCapturingTest;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import nl.knaw.dans.dvcli.AbstractCapturingTest;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BatchProcessorTest extends AbstractCapturingTest {
+    public static Stream<String> messagesOf(ListAppender<ILoggingEvent> logged) {
+        return logged.list.stream().map(iLoggingEvent -> iLoggingEvent.getLevel() + "  " + iLoggingEvent.getFormattedMessage());
+    }
 
     @Test
     public void batchProcessor_should_continue_after_failure() {
@@ -64,7 +69,7 @@ public class BatchProcessorTest extends AbstractCapturingTest {
             ok
             INFO  Finished batch processing of 3 items
             """);
-        assertThat(TestUtils.messagesOf(logged))
+        assertThat(messagesOf(logged))
             .containsExactly("INFO  Starting batch processing",
                 "INFO  Processing item 1 of 3",
                 "DEBUG  Sleeping for 1 ms",
@@ -170,7 +175,7 @@ public class BatchProcessorTest extends AbstractCapturingTest {
             INFO  Starting batch processing
             INFO  Finished batch processing of 0 items
             """);
-        assertThat(TestUtils.messagesOf(logged)).containsExactly(
+        assertThat(messagesOf(logged)).containsExactly(
             "INFO  Starting batch processing",
             "INFO  Finished batch processing of 0 items");
     }
@@ -187,7 +192,7 @@ public class BatchProcessorTest extends AbstractCapturingTest {
 
         assertThat(stderr.toString()).isEqualTo("");
         assertThat(stdout.toString()).isEqualTo("");
-        assertThat(TestUtils.messagesOf(logged)).containsExactly();
+        assertThat(messagesOf(logged)).containsExactly();
     }
 
     @Test
@@ -200,6 +205,6 @@ public class BatchProcessorTest extends AbstractCapturingTest {
 
         assertThat(stderr.toString()).isEqualTo("");
         assertThat(stdout.toString()).isEqualTo("");
-        assertThat(TestUtils.messagesOf(logged)).containsExactly();
+        assertThat(messagesOf(logged)).containsExactly();
     }
 }

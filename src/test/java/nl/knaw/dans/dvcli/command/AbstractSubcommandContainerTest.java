@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.dvcli.command;
 
+import nl.knaw.dans.dvcli.AbstractCapturingTest;
 import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseException;
