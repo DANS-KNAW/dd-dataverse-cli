@@ -15,44 +15,18 @@
  */
 package nl.knaw.dans.dvcli.action;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import nl.knaw.dans.dvcli.TestUtils;
+import nl.knaw.dans.dvcli.command.AbstractCapturingTest;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class BatchProcessorTest {
-
-    private final PrintStream originalStdout = System.out;
-    private final PrintStream originalStderr = System.err;
-    private OutputStream stdout;
-    private OutputStream stderr;
-    private ListAppender<ILoggingEvent> logged;
-
-    @BeforeEach
-    public void setUp() {
-        stdout = TestUtils.captureStdout();
-        stderr = TestUtils.captureStderr();
-        logged = TestUtils.captureLog(Level.DEBUG, "nl.knaw.dans");
-    }
-
-    @AfterEach
-    public void tearDown() {
-
-        System.setOut(originalStdout);
-        System.setErr(originalStderr);
-    }
+public class BatchProcessorTest extends AbstractCapturingTest {
 
     @Test
     public void batchProcessor_should_continue_after_failure() {
