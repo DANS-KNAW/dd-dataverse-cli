@@ -18,7 +18,6 @@ package nl.knaw.dans.dvcli.action;
 import nl.knaw.dans.dvcli.AbstractTestWithTestDir;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
-import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -27,8 +26,6 @@ import org.mockito.Mockito;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Stream;
@@ -57,15 +54,10 @@ public class SingleOrTest extends AbstractTestWithTestDir {
         return collections.stream().map(p -> new Pair(p.getFirst(), p.getSecond().toString()));
     }
 
-    private static DataverseClient getClient() throws URISyntaxException {
-        var baseUrl = new URI("http://does.not.exist.dans.knaw.nl");
-        return new DataverseClient(new DataverseClientConfig(baseUrl, "apiTokenValue"));
-    }
-
     @Test
     public void getCollections_should_return_single_value() throws Exception {
 
-        var collections = new SingleCollectionOrCollectionsFile("xyz", getClient())
+        var collections = new SingleCollectionOrCollectionsFile("xyz", new DataverseClient(null))
             .getCollections().toList();
 
         assertThat(mapSecondToString(collections)).containsExactly(
@@ -83,7 +75,7 @@ public class SingleOrTest extends AbstractTestWithTestDir {
 
     @Test
     public void getDatasetIds_should_return_single_dataset_in_aList() throws Exception {
-        var datasets = new SingleDatasetOrDatasetsFile("1", getClient())
+        var datasets = new SingleDatasetOrDatasetsFile("1", new DataverseClient(null))
             .getDatasets().toList();
         assertThat(mapSecondToString(datasets))
             .containsExactly(new Pair("1", "DatasetApi(id='1, isPersistentId=false)"));
@@ -98,7 +90,7 @@ public class SingleOrTest extends AbstractTestWithTestDir {
             a blabla
             1""");
 
-        var datasets = new SingleDatasetOrDatasetsFile(filePath.toString(), getClient())
+        var datasets = new SingleDatasetOrDatasetsFile(filePath.toString(), new DataverseClient(null))
             .getDatasets().toList();
 
         assertThat(mapSecondToString(datasets)).containsExactly(
@@ -111,7 +103,7 @@ public class SingleOrTest extends AbstractTestWithTestDir {
     @Test
     public void getDatasets_should_throw_when_parsing_a_directory() throws Exception {
 
-        var ids = new SingleDatasetOrDatasetsFile("target", getClient());
+        var ids = new SingleDatasetOrDatasetsFile("target", new DataverseClient(null));
         assertThatThrownBy(ids::getDatasets)
             .isInstanceOf(IOException.class)
             .hasMessage("target is not a regular file");
@@ -127,7 +119,7 @@ public class SingleOrTest extends AbstractTestWithTestDir {
                         
             """.getBytes()));
 
-        var datasets = new SingleDatasetOrDatasetsFile("-", getClient())
+        var datasets = new SingleDatasetOrDatasetsFile("-", new DataverseClient(null))
             .getDatasets().toList();
         assertThat(mapSecondToString(datasets)).containsExactly(
             new Pair("A", "DatasetApi(id='A, isPersistentId=true)"),
