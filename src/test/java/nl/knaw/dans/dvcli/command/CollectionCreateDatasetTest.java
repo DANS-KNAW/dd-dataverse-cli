@@ -1,42 +1,49 @@
 package nl.knaw.dans.dvcli.command;
 
 import nl.knaw.dans.dvcli.AbstractCapturingTest;
-import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.lib.dataverse.DataverseApi;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
 import nl.knaw.dans.lib.dataverse.DataverseHttpResponse;
 import nl.knaw.dans.lib.dataverse.model.dataset.DatasetCreationResult;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class CollectionCreateDatasetTest extends AbstractCapturingTest {
+
+    private final InputStream originalStdin = System.in;
+
+    @AfterEach
+    public void tearDown() {
+        System.setIn(originalStdin);
+    }
+
     @Test
     public void doCall_continues_on_unknownHost() throws Exception {
 
-        var metadataKeys = new HashMap<String, String>();
         var unknownHostConfig = new DataverseClientConfig(new URI("https://does.not.exist.dans.knaw.nl"), "apiToken");
-        var cmd = getCmd(
-            metadataKeys,
-            List.of(
-                new Pair<>("A", new DataverseClient(unknownHostConfig).dataverse("A")),
-                new Pair<>("B", new DataverseClient(unknownHostConfig).dataverse("B")),
-                new Pair<>("C", new DataverseClient(unknownHostConfig).dataverse("B"))
-            )
-        );
+        var client = new DataverseClient(unknownHostConfig);
 
-        // method under test
+        var metadataKeys = new HashMap<String, String>();
+        var json = "src/test/resources/debug-etc/config.yml"; // invalid json file, don't care
+        System.setIn(new ByteArrayInputStream("A B C".getBytes()));
+
+        // command under test
+        var cmd = getCmd("-", metadataKeys, json, client);
         cmd.doCall();
 
         assertThat(stdout.toString()).isEqualTo("""
@@ -46,7 +53,7 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
             INFO  Processing item 2 of 3
             DEBUG buildUri: https://does.not.exist.dans.knaw.nl/api/dataverses/B/datasets
             INFO  Processing item 3 of 3
-            DEBUG buildUri: https://does.not.exist.dans.knaw.nl/api/dataverses/B/datasets
+            DEBUG buildUri: https://does.not.exist.dans.knaw.nl/api/dataverses/C/datasets
             INFO  Finished batch processing of 3 items
             """);
         assertThat(stderr.toString()).isEqualTo("""
@@ -57,68 +64,65 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
     }
 
     @Test
-    public void doCall_() throws Exception {
+    public void doCall_is_happy() throws Exception {
 
         var metadataKeys = new HashMap<String, String>();
+        var jsonFile = "src/test/resources/debug-etc/config.yml"; // invalid json file, don't care
 
-        DataverseHttpResponse<DatasetCreationResult> responseA = Mockito.mock(DataverseHttpResponse.class);
-        DataverseHttpResponse<DatasetCreationResult> responseB = Mockito.mock(DataverseHttpResponse.class);
-        Mockito.when(responseA.getEnvelopeAsString()).thenReturn("some string");
-        Mockito.when(responseB.getEnvelopeAsString()).thenReturn("some other string");
-
+        // mock objects
+        @SuppressWarnings("unchecked")
+        DataverseHttpResponse<DatasetCreationResult> response = Mockito.mock(DataverseHttpResponse.class);
+        var client = Mockito.mock(DataverseClient.class);
         var api = Mockito.mock(DataverseApi.class);
-        Mockito.when(api.createDataset(eq("A"), any())).thenReturn(null);
-        Mockito.when(api.createDataset(eq("B"), any())).thenReturn(responseB);
-        // TODO the two when's above are not effective, working around as below
-        Mockito.when(api.createDataset((String) any(), any())).thenReturn(responseA);
 
-        CollectionCreateDataset cmd = getCmd(
-            metadataKeys,
-            List.of(
-                new Pair<>("A", api),
-                new Pair<>("B", api)
-            )
-        );
+        // mock behavior
+        Mockito.when(client.dataverse("A")).thenReturn(api);
+        Mockito.when(api.createDataset(Files.readString(Path.of(jsonFile)), metadataKeys)).thenReturn(response);
+        Mockito.when(response.getEnvelopeAsString()).thenReturn("mock response");
 
-        // method under test
+        // command under test
+        CollectionCreateDataset cmd = getCmd("A", metadataKeys, jsonFile, client);
         cmd.doCall();
 
-        assertThat(stderr.toString()).isEqualTo("A: OK. B: OK. ");
+        assertThat(stderr.toString()).isEqualTo("A: OK. ");
         assertThat(stdout.toString()).isEqualTo("""
             INFO  Starting batch processing
-            INFO  Processing item 1 of 2
-            some string
-            INFO  Processing item 2 of 2
-            some string
-            INFO  Finished batch processing of 2 items
+            INFO  Processing item 1 of 1
+            mock response
+            INFO  Finished batch processing of 1 items
             """);
 
-        verify(api, times(2)).createDataset((String) any(), any());
+        verify(api, times(1)).createDataset((String) any(), any());
+        verify(response, times(1)).getEnvelopeAsString();
+        verify(client, times(1)).dataverse(any());
         verifyNoMoreInteractions(api);
     }
 
-    private static CollectionCreateDataset getCmd(HashMap<String, String> metadataKeys, final List<Pair<String, DataverseApi>> pairs) throws NoSuchFieldException, IllegalAccessException {
-        var cmd = new CollectionCreateDataset();
+    private static CollectionCreateDataset getCmd(String target, HashMap<String, String> metadataKeys, String json, final DataverseClient client)
+        throws NoSuchFieldException, IllegalAccessException {
 
-        // set private fields
+        // set private fields with reflection
+
+        var cmd = new CollectionCmd(client);
+
+        var targetField = AbstractSubcommandContainer.class.getDeclaredField("targets");
+        targetField.setAccessible(true);
+        targetField.set(cmd, target);
+
+        var subCmd = new CollectionCreateDataset();
 
         var datasetField = CollectionCreateDataset.class.getDeclaredField("dataset");
         datasetField.setAccessible(true);
-        datasetField.set(cmd, "src/test/resources/debug-etc/config.yml"); // invalid json file
+        datasetField.set(subCmd, json);
 
         var metadataKeysField = CollectionCreateDataset.class.getDeclaredField("metadataKeys");
         metadataKeysField.setAccessible(true);
-        metadataKeysField.set(cmd, metadataKeys);
+        metadataKeysField.set(subCmd, metadataKeys);
 
         var collectionCmdField = CollectionCreateDataset.class.getDeclaredField("collectionCmd");
         collectionCmdField.setAccessible(true);
-        collectionCmdField.set(cmd, new CollectionCmd(new DataverseClient(null)) {
+        collectionCmdField.set(subCmd, cmd);
 
-            @Override
-            protected List<Pair<String, DataverseApi>> getItems() {
-                return pairs;
-            }
-        });
-        return cmd;
+        return subCmd;
     }
 }
