@@ -195,11 +195,6 @@ public class AbstractSubcommandContainerTest extends AbstractCapturingTest {
 
     @Test
     public void batchProcessor_does_not_throw() {
-        // TODO the new method batchProcessor reduces boiler plate.
-        //  Why is DeleteDraft.doCall not call batchProcessorBuilder like the Collection commands?
-        //  So far only CollectionAssignRole needs another labeledItems argument.
-        //  Shouldn't it override CollectionCmd.getItems?
-        //  Can we go further with batchProcess: call process too?
         assertDoesNotThrow(() ->
             new TestCmd("1")
                 .batchProcessor(Object::toString)
