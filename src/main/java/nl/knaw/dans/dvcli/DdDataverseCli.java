@@ -33,6 +33,7 @@ import nl.knaw.dans.dvcli.command.CollectionSetMetadataBlocksRoot;
 import nl.knaw.dans.dvcli.command.CollectionView;
 import nl.knaw.dans.dvcli.command.DatasetCmd;
 import nl.knaw.dans.dvcli.command.DeleteDraft;
+import nl.knaw.dans.dvcli.command.NotificationTruncate;
 import nl.knaw.dans.dvcli.config.DdDataverseCliConfig;
 import nl.knaw.dans.lib.util.AbstractCommandLineApp;
 import nl.knaw.dans.lib.util.PicocliVersionProvider;
@@ -73,7 +74,8 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
                 .addSubcommand(new CollectionView()))
             .addSubcommand(new CommandLine(new DatasetCmd(dataverseClient))
                 .addSubcommand(new DeleteDraft())
-            );
+            )
+            .addSubcommand(new CommandLine(new NotificationTruncate()));
         log.debug("Configuring command line");
     }
 }
