@@ -58,6 +58,7 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
     public void configureCommandLine(CommandLine commandLine, DdDataverseCliConfig config) {
         log.debug("Building Dataverse client");
         var dataverseClient = config.getDataverse().build();
+        var databaseConfig = config.getDb();
         commandLine.addSubcommand(new CommandLine(new CollectionCmd(dataverseClient))
                 .addSubcommand(new CollectionAssignRole())
                 .addSubcommand(new CollectionCreateDataset())
@@ -75,7 +76,7 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
             .addSubcommand(new CommandLine(new DatasetCmd(dataverseClient))
                 .addSubcommand(new DeleteDraft())
             )
-            .addSubcommand(new CommandLine(new NotificationTruncate()));
+            .addSubcommand(new CommandLine(new NotificationTruncate(databaseConfig)));
         log.debug("Configuring command line");
     }
 }

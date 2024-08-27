@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.dvcli.command;
 
+import nl.knaw.dans.dvcli.action.Database;
+import nl.knaw.dans.dvcli.config.DdDataverseDatabaseConfig;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "truncate-notifications",
@@ -22,6 +24,11 @@ import picocli.CommandLine;
         description = "Remove user notifications but keep up to a specified amount.")
 public class NotificationTruncate extends AbstractCmd {
     // dataverse truncate-notifications {--user <uid>|--all-users } <number-of-records-to-keep>
+
+    DdDataverseDatabaseConfig dbcfg;
+    public NotificationTruncate(DdDataverseDatabaseConfig dbcfg) {
+        this.dbcfg = dbcfg;
+    }
 
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     UserOptions users;
@@ -43,6 +50,17 @@ public class NotificationTruncate extends AbstractCmd {
         System.out.println("Number of records to keep: " + numberOfRecordsToKeep);
         System.out.println("User: " + (users.allUser ? "all users" : users.user));
         
+        // show database config
+        System.out.println("Database config - host: " + dbcfg.getHost());
+        System.out.println("Database config - database: " + dbcfg.getDatabase());
+        System.out.println("Database config - user: " + dbcfg.getUser());
+        System.out.println("Database config - password: " + dbcfg.getPassword());
+        
+        // Connect to database
+        Database db = new Database(dbcfg);
+        //db.connect();
+        // do someting with the database
+        //db.close();
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 }

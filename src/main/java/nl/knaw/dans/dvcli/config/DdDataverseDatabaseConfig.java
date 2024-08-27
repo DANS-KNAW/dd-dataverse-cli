@@ -16,17 +16,23 @@
 
 package nl.knaw.dans.dvcli.config;
 
-import io.dropwizard.core.Configuration;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
-import nl.knaw.dans.lib.util.DataverseClientFactory;
+
+import javax.validation.constraints.NotEmpty;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class DdDataverseCliConfig extends Configuration {
-    private DataverseClientFactory dataverse;
+public class DdDataverseDatabaseConfig {
     
-    @NonNull
-    private DdDataverseDatabaseConfig db = new DdDataverseDatabaseConfig();
+    @NotEmpty
+    private String host = "localhost";
+    
+    @NotEmpty
+    private String database = "dvndb";
+    
+    @NotEmpty
+    private String user = "dvnapp";
+
+    @NotEmpty
+    private String password = "secret";
 }
+
