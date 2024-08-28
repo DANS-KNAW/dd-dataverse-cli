@@ -23,7 +23,8 @@ import java.util.List;
 
 @CommandLine.Command(name = "truncate-notifications",
         mixinStandardHelpOptions = true,
-        description = "Remove user notifications but keep up to a specified amount.")
+        description = "Remove user notifications but keep up to a specified amount.",
+        sortOptions = false)
 public class NotificationTruncate extends AbstractCmd {
     // dataverse truncate-notifications {--user <uid>|--all-users } <number-of-records-to-keep>
 
@@ -47,6 +48,10 @@ public class NotificationTruncate extends AbstractCmd {
     
     @Override
     public void doCall() {
+        if (numberOfRecordsToKeep < 0) {
+            System.err.println("Number of records to keep must be a positive integer.");
+            return;
+        }
         printInput();
         printConfig();
         
@@ -64,9 +69,16 @@ public class NotificationTruncate extends AbstractCmd {
             System.out.println("Notifications for user " + users.user + ":");
             printResults(results);
             
+            // Sort of dry-run, show what will be deleted
+            // Note that the subquery is used to get the last n records to keep, we can not sort that in the outer query
+            // but the natural order of creation is also the senddate, so not a real problem here
             results = db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%s' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%s' ORDER BY senddate DESC LIMIT %d);", users.user, users.user, numberOfRecordsToKeep));
             System.out.println("Notifications for user " + users.user + " that will be deleted:");
             printResults(results);
+            
+            // Actually delete the notifications
+            int rowCount = db.update(String.format("DELETE FROM usernotification WHERE user_id = '%s' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%s' ORDER BY senddate DESC LIMIT %d);", users.user, users.user, numberOfRecordsToKeep));
+            System.out.println("Deleted " + rowCount + " rows.");
         }
         
         db.close();

@@ -91,9 +91,7 @@ public class Database {
             List<String> columnNames = new ArrayList<String>();
             for (int i = 1; i <= numColumns; i++) {
                 columnNames.add(rs.getMetaData().getColumnName(i));
-                //System.out.print(rs.getMetaData().getColumnName(i) + " ");
             }
-            //System.out.println("");
 
             // make it the first row, for simplicity, a bit like with a csv file
             rows.add(columnNames);
@@ -102,10 +100,8 @@ public class Database {
                 List<String> row = new ArrayList<String>();
                 for (int i = 1; i <= numColumns; i++) {
                     row.add(rs.getString(i));
-                    //System.out.print(rs.getString(i) + " ");
                 }
                 rows.add(row);
-                //System.out.println("");
             }
             
             // cleanup
@@ -116,5 +112,17 @@ public class Database {
         }
         
         return rows;
+    }
+    
+    public int update(String sql) {
+        int rowCount = 0;
+        try {
+            Statement stmt = connection.createStatement();
+            rowCount = stmt.executeUpdate( sql );
+            stmt.close();
+        } catch (SQLException e) {
+            System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
+        }
+        return rowCount;
     }
 }
