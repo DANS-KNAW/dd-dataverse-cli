@@ -79,7 +79,8 @@ public class Database {
         }
     }
     
-    public void query(String sql) {
+    public List<List<String>> query(String sql) {
+        List<List<String>> rows = new ArrayList<>();
         try {
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery( sql );
@@ -90,29 +91,30 @@ public class Database {
             List<String> columnNames = new ArrayList<String>();
             for (int i = 1; i <= numColumns; i++) {
                 columnNames.add(rs.getMetaData().getColumnName(i));
-                System.out.print(rs.getMetaData().getColumnName(i) + " ");
+                //System.out.print(rs.getMetaData().getColumnName(i) + " ");
             }
-            System.out.println("");
-            // get the rows
-            List<List<String>> rows = new ArrayList<>();
+            //System.out.println("");
+
+            // make it the first row, for simplicity, a bit like with a csv file
+            rows.add(columnNames);
+            // get the data rows
             while (rs.next()) {
                 List<String> row = new ArrayList<String>();
                 for (int i = 1; i <= numColumns; i++) {
                     row.add(rs.getString(i));
-                    System.out.print(rs.getString(i) + " ");
+                    //System.out.print(rs.getString(i) + " ");
                 }
                 rows.add(row);
-                System.out.println("");
+                //System.out.println("");
             }
             
             // cleanup
             rs.close();
             stmt.close();
-
-            // store results (columnNames and rows) in csv ?
-            
         } catch (SQLException e) {
             System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
         }
+        
+        return rows;
     }
 }

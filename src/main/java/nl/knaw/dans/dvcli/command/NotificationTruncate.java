@@ -19,6 +19,8 @@ import nl.knaw.dans.dvcli.action.Database;
 import nl.knaw.dans.dvcli.config.DdDataverseDatabaseConfig;
 import picocli.CommandLine;
 
+import java.util.List;
+
 @CommandLine.Command(name = "truncate-notifications",
         mixinStandardHelpOptions = true,
         description = "Remove user notifications but keep up to a specified amount.")
@@ -45,22 +47,55 @@ public class NotificationTruncate extends AbstractCmd {
     
     @Override
     public void doCall() {
-        // show commandline input
-        System.out.println("Truncating notifications...");
-        System.out.println("Number of records to keep: " + numberOfRecordsToKeep);
-        System.out.println("User: " + (users.allUser ? "all users" : users.user));
-        
-        // show database config
-        System.out.println("Database config - host: " + dbcfg.getHost());
-        System.out.println("Database config - database: " + dbcfg.getDatabase());
-        System.out.println("Database config - user: " + dbcfg.getUser());
-        System.out.println("Database config - password: " + dbcfg.getPassword());
+        printInput();
+        printConfig();
         
         // Connect to database
         Database db = new Database(dbcfg);
         db.connect();
+        
         // do someting with the database
-        db.query("SELECT * FROM usernotification;");
+        List<List<String>> results = db.query("SELECT * FROM usernotification;");
+        System.out.println("All notifications:");
+        printResults(results);
+        
+        if (!users.allUser) {
+            results = db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%s';", users.user));
+            System.out.println("Notifications for user " + users.user + ":");
+            printResults(results);
+            
+            results = db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%s' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%s' ORDER BY senddate DESC LIMIT %d);", users.user, users.user, numberOfRecordsToKeep));
+            System.out.println("Notifications for user " + users.user + " that will be deleted:");
+            printResults(results);
+        }
+        
         db.close();
+    }
+
+    // could also have a function for storing results (columnNames and rows) in csv file ?
+
+    private void printResults(List<List<String>> results) {
+        // Note that the first row is actually the column names
+        for (List<String> row : results) {
+            for (String cell : row) {
+                System.out.print(cell + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    // show commandline input
+    private void printInput() {
+        System.out.println("Truncating notifications...");
+        System.out.println("Number of records to keep: " + numberOfRecordsToKeep);
+        System.out.println("User: " + (users.allUser ? "all users" : users.user));
+    }
+    
+    // show database config
+    private void printConfig() {
+        System.out.println("Database config - host: " + dbcfg.getHost());
+        System.out.println("Database config - database: " + dbcfg.getDatabase());
+        System.out.println("Database config - user: " + dbcfg.getUser());
+        System.out.println("Database config - password: " + dbcfg.getPassword());
     }
 }
