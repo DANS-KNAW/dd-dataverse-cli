@@ -62,6 +62,5 @@ public class NotificationTruncate extends AbstractCmd {
         // do someting with the database
         db.query("SELECT * FROM usernotification;");
         db.close();
-        throw new UnsupportedOperationException("Not yet implemented.");
     }
 }

@@ -44,10 +44,10 @@ public class Database {
 
     String port = "5432"; // Fixed port for Postgres
     // TODO should come from config
-    String host = "localhost";
-    String database = "dvndb";
-    String user = "dvnuser";
-    String password = "dvnsecret";
+    String host;
+    String database;
+    String user;
+    String password;
     
     public void connect() {
         try {
@@ -86,8 +86,9 @@ public class Database {
             
             // extract data from result set
             // get column names
+            int numColumns = rs.getMetaData().getColumnCount();
             List<String> columnNames = new ArrayList<String>();
-            for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+            for (int i = 1; i <= numColumns; i++) {
                 columnNames.add(rs.getMetaData().getColumnName(i));
                 System.out.print(rs.getMetaData().getColumnName(i) + " ");
             }
@@ -96,7 +97,7 @@ public class Database {
             List<List<String>> rows = new ArrayList<>();
             while (rs.next()) {
                 List<String> row = new ArrayList<String>();
-                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                for (int i = 1; i <= numColumns; i++) {
                     row.add(rs.getString(i));
                     System.out.print(rs.getString(i) + " ");
                 }
@@ -109,6 +110,7 @@ public class Database {
             stmt.close();
 
             // store results (columnNames and rows) in csv ?
+            
         } catch (SQLException e) {
             System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
         }

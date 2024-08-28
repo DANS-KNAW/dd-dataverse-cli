@@ -30,9 +30,9 @@ public class DdDataverseDatabaseConfig {
     private String database = "dvndb";
     
     @NotEmpty
-    private String user = "dvnapp";
+    private String user = "dvnuser";
 
     @NotEmpty
-    private String password = "secret";
+    private String password = "dvnsecret";
 }
 
