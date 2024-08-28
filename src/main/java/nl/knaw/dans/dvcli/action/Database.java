@@ -17,9 +17,14 @@ package nl.knaw.dans.dvcli.action;
 
 import nl.knaw.dans.dvcli.config.DdDataverseDatabaseConfig;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Provides access to the Dataverse Database (Postgres).
@@ -41,11 +46,12 @@ public class Database {
     // TODO should come from config
     String host = "localhost";
     String database = "dvndb";
-    String user = "dvnapp";
-    String password = "secret";
+    String user = "dvnuser";
+    String password = "dvnsecret";
     
     public void connect() {
         try {
+            Class.forName("org.postgresql.Driver");
             if (connection == null) {
                 connection = DriverManager
                         .getConnection("jdbc:postgresql://" + host + ":" + port + "/" + database,
@@ -57,7 +63,7 @@ public class Database {
             } else {
                 System.out.println("Failed to make connection!");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
         }
     }
@@ -68,6 +74,41 @@ public class Database {
                 connection.close();
                 connection = null;
             }
+        } catch (SQLException e) {
+            System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
+        }
+    }
+    
+    public void query(String sql) {
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery( sql );
+            
+            // extract data from result set
+            // get column names
+            List<String> columnNames = new ArrayList<String>();
+            for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                columnNames.add(rs.getMetaData().getColumnName(i));
+                System.out.print(rs.getMetaData().getColumnName(i) + " ");
+            }
+            System.out.println("");
+            // get the rows
+            List<List<String>> rows = new ArrayList<>();
+            while (rs.next()) {
+                List<String> row = new ArrayList<String>();
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    row.add(rs.getString(i));
+                    System.out.print(rs.getString(i) + " ");
+                }
+                rows.add(row);
+                System.out.println("");
+            }
+            
+            // cleanup
+            rs.close();
+            stmt.close();
+
+            // store results (columnNames and rows) in csv ?
         } catch (SQLException e) {
             System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
         }
