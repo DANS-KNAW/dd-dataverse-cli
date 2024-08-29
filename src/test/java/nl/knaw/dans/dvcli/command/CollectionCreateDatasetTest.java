@@ -114,10 +114,10 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
     }
 
     @Test
-    public void doCall_with_dir_as_json() throws Exception {
+    public void doCall_with_dir_as_json_file_fails() throws Exception {
 
         var metadataKeys = new HashMap<String, String>();
-        var jsonFile = "src/test/resources/debug-etc"; // invalid json file, don't care
+        var jsonFile = "src/test/resources/debug-etc";
         var client = new DataverseClient(new DataverseClientConfig(new URI("http://localhost:8080"), "apiToken"));
 
         // command under test
