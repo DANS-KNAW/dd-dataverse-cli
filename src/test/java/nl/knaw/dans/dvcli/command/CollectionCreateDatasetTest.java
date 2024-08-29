@@ -113,6 +113,27 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
         verifyNoMoreInteractions(api);
     }
 
+    @Test
+    public void doCall_with_dir_as_json() throws Exception {
+
+        var metadataKeys = new HashMap<String, String>();
+        var jsonFile = "src/test/resources/debug-etc"; // invalid json file, don't care
+        var client = new DataverseClient(new DataverseClientConfig(new URI("http://localhost:8080"), "apiToken"));
+
+        // command under test
+        CollectionCreateDataset cmd = getCmd("A", metadataKeys, jsonFile, client);
+        cmd.doCall();
+
+        assertThat(stderr.toString()).isEqualTo("""
+            A: FAILED: Exception type = IOException, message = Is a directory
+            """);
+        assertThat(stdout.toString()).isEqualTo("""
+            INFO  Starting batch processing
+            INFO  Processing item 1 of 1
+            INFO  Finished batch processing of 1 items
+            """);
+    }
+
     private static CollectionCreateDataset getCmd(String target, HashMap<String, String> metadataKeys, String json, final DataverseClient client)
         throws NoSuchFieldException, IllegalAccessException {
 
