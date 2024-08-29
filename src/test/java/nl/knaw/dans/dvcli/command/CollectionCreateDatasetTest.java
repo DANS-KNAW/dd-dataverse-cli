@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -118,20 +120,44 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
 
         var metadataKeys = new HashMap<String, String>();
         var jsonFile = "src/test/resources/debug-etc";
-        var client = new DataverseClient(new DataverseClientConfig(new URI("http://localhost:8080"), "apiToken"));
+        var client = new DataverseClient(new DataverseClientConfig(null));
+        var originalIn = System.in;
+        System.setIn(new ByteArrayInputStream("A B".getBytes()));
 
-        // command under test
-        CollectionCreateDataset cmd = getCmd("A", metadataKeys, jsonFile, client);
-        cmd.doCall();
+        try {
+            // command under test
+            CollectionCreateDataset cmd = getCmd("-", metadataKeys, jsonFile, client);
+            cmd.doCall();
+        }
+        finally {
+            System.setIn(originalIn);
+        }
 
         assertThat(stderr.toString()).isEqualTo("""
             A: FAILED: Exception type = IOException, message = Is a directory
+            B: FAILED: Exception type = IOException, message = Is a directory
             """);
         assertThat(stdout.toString()).isEqualTo("""
             INFO  Starting batch processing
-            INFO  Processing item 1 of 1
-            INFO  Finished batch processing of 1 items
+            INFO  Processing item 1 of 2
+            INFO  Processing item 2 of 2
+            INFO  Finished batch processing of 2 items
             """);
+    }
+
+    @Test
+    public void doCall_with_dir_as_ids_file_throws() throws Exception {
+
+        var metadataKeys = new HashMap<String, String>();
+        var client = new DataverseClient(new DataverseClientConfig(null));
+
+        // command under test
+
+        var target = "src/test/resources";
+        var cmd = getCmd(target, metadataKeys, "do-not-care-about-json-file", client);
+        assertThatThrownBy(cmd::doCall)
+            .isInstanceOf(IOException.class)
+            .hasMessage("src/test/resources is not a regular file");
     }
 
     private static CollectionCreateDataset getCmd(String target, HashMap<String, String> metadataKeys, String json, final DataverseClient client)
