@@ -20,6 +20,8 @@ import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,6 +31,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class AbstractSubcommandContainerTest extends AbstractCapturingTest {
+    private static final Logger log = LoggerFactory.getLogger(AbstractSubcommandContainerTest.class);
+
     private static class TestCmd extends AbstractSubcommandContainer<Object> {
 
         public TestCmd(String targets) {
@@ -42,6 +46,55 @@ public class AbstractSubcommandContainerTest extends AbstractCapturingTest {
                 new Pair<>("1", "value of 1")
             );
         }
+    }
+
+    @Test
+    public void datasetCmd_with_dir_as_targets_file_throws() throws Exception {
+
+        var cmd = new DatasetCmd(new DataverseClient(null)){
+            @Override
+            public void doCall() throws IOException {
+                getItems();
+            }
+        };
+
+        // set private field
+        var targetField = AbstractSubcommandContainer.class.getDeclaredField("targets");
+        targetField.setAccessible(true);
+        targetField.set(cmd, "src/test/resources");
+
+        assertThatThrownBy(cmd::doCall)
+            .isInstanceOf(IOException.class)
+            .hasMessage("src/test/resources is not a regular file");
+
+        assertThat(logged.list).isEmpty();
+        assertThat(stdout.toString()).isEqualTo("");
+        assertThat(stderr.toString()).isEqualTo("");
+    }
+
+    @Test
+    public void collectionCmd_with_dir_as_targets_file_throws() throws Exception {
+
+        var cmd = new CollectionCmd(new DataverseClient(null)) {
+
+            @Override
+            public void doCall() throws IOException {
+                log.debug("doCall");
+                getItems();
+            }
+        };
+
+        // set private field
+        var targetField = AbstractSubcommandContainer.class.getDeclaredField("targets");
+        targetField.setAccessible(true);
+        targetField.set(cmd, "src/test/resources");
+
+        assertThatThrownBy(cmd::doCall)
+            .isInstanceOf(IOException.class)
+            .hasMessage("src/test/resources is not a regular file");
+
+        assertThat(stdout.toString()).isEqualTo("DEBUG doCall\n");
+        assertThat(stderr.toString()).isEqualTo("");
     }
 
     @Test

@@ -26,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
@@ -34,7 +33,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -145,21 +143,6 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
             """);
     }
 
-    @Test
-    public void doCall_with_dir_as_ids_file_throws() throws Exception {
-
-        var metadataKeys = new HashMap<String, String>();
-        var client = new DataverseClient(new DataverseClientConfig(null));
-
-        // command under test
-
-        var target = "src/test/resources";
-        var cmd = getCmd(target, metadataKeys, "do-not-care-about-json-file", client);
-        assertThatThrownBy(cmd::doCall)
-            .isInstanceOf(IOException.class)
-            .hasMessage("src/test/resources is not a regular file");
-    }
-
     private static CollectionCreateDataset getCmd(String target, HashMap<String, String> metadataKeys, String json, final DataverseClient client)
         throws NoSuchFieldException, IllegalAccessException {
 
@@ -167,9 +150,9 @@ public class CollectionCreateDatasetTest extends AbstractCapturingTest {
 
         var cmd = new CollectionCmd(client);
 
-        var targetField = AbstractSubcommandContainer.class.getDeclaredField("targets");
-        targetField.setAccessible(true);
-        targetField.set(cmd, target);
+        var targetsField = AbstractSubcommandContainer.class.getDeclaredField("targets");
+        targetsField.setAccessible(true);
+        targetsField.set(cmd, target);
 
         var subCmd = new CollectionCreateDataset();
 
