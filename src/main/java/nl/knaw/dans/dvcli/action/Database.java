@@ -61,11 +61,6 @@ public class Database {
                                 user,
                                 password);
             }
-            if (connection != null) {
-                System.out.println("Connected to the database!");
-            } else {
-                System.out.println("Failed to make connection!");
-            }
         } catch (Exception e) {
             System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
         }
@@ -75,10 +70,11 @@ public class Database {
         try {
             if (connection != null) {
                 connection.close();
-                connection = null;
             }
         } catch (SQLException e) {
             System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
+        } finally {
+            connection = null;
         }
     }
 
