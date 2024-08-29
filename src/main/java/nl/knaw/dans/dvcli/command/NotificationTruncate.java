@@ -15,19 +15,20 @@
  */
 package nl.knaw.dans.dvcli.command;
 
+import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.dvcli.action.Database;
 import nl.knaw.dans.dvcli.config.DdDataverseDatabaseConfig;
 import picocli.CommandLine;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @CommandLine.Command(name = "truncate-notifications",
         mixinStandardHelpOptions = true,
         description = "Remove user notifications but keep up to a specified amount.",
         sortOptions = false)
+@Slf4j
 public class NotificationTruncate extends AbstractCmd {
-    // dataverse truncate-notifications {--user <uid>|--all-users } <number-of-records-to-keep>
-
     DdDataverseDatabaseConfig dbcfg;
     public NotificationTruncate(DdDataverseDatabaseConfig dbcfg) {
         this.dbcfg = dbcfg;
@@ -37,57 +38,82 @@ public class NotificationTruncate extends AbstractCmd {
     UserOptions users;
 
     static class UserOptions {
-        @CommandLine.Option(names = { "--user" }, required = true, description = "The user whose notifications to truncate.")
-        private String user;
-        @CommandLine.Option(names = { "--all-users" }, required = true, description = "Truncate notifications for all users.")
-        private boolean allUser;
+        @CommandLine.Option(names = { "--user" }, required = true, 
+                description = "The user whose notifications to truncate.")
+        private int user; // a number, preventing accidental SQL injection
+        // Or maybe this should have been the user name (as in the GUI) 
+        // and not the database id ?
+        
+        @CommandLine.Option(names = { "--all-users" }, required = true, 
+                description = "Truncate notifications for all users.")
+        private boolean allUsers;
     }
     
-    @CommandLine.Parameters(index = "0", paramLabel = "number-of-records-to-keep", description = "The number of notifications to keep.")
+    @CommandLine.Parameters(index = "0", paramLabel = "number-of-records-to-keep", 
+            description = "The number of notifications to keep.")
     private int numberOfRecordsToKeep;
     
     @Override
     public void doCall() {
+        log.debug("Truncating notifications");
         if (numberOfRecordsToKeep < 0) {
             System.err.println("Number of records to keep must be a positive integer.");
-            return;
+            return; // or should we throw an exception or exit(2) ?
         }
-        printInput();
-        printConfig();
         
         // Connect to database
         Database db = new Database(dbcfg);
         db.connect();
         
-        // do someting with the database
-        List<List<String>> results = db.query("SELECT * FROM usernotification;");
+        List<List<String>> results = db.query("SELECT * FROM usernotification;", true );
         System.out.println("All notifications:");
         printResults(results);
         
-        if (!users.allUser) {
-            results = db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%s';", users.user));
-            System.out.println("Notifications for user " + users.user + ":");
-            printResults(results);
-            
-            // Sort of dry-run, show what will be deleted
-            // Note that the subquery is used to get the last n records to keep, we can not sort that in the outer query
-            // but the natural order of creation is also the senddate, so not a real problem here
-            results = db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%s' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%s' ORDER BY senddate DESC LIMIT %d);", users.user, users.user, numberOfRecordsToKeep));
-            System.out.println("Notifications for user " + users.user + " that will be deleted:");
-            printResults(results);
-            
-            // Actually delete the notifications
-            int rowCount = db.update(String.format("DELETE FROM usernotification WHERE user_id = '%s' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%s' ORDER BY senddate DESC LIMIT %d);", users.user, users.user, numberOfRecordsToKeep));
-            System.out.println("Deleted " + rowCount + " rows.");
+        if (users.allUsers) {
+            getUserIds(db).forEach(user_id -> truncateNotifications(db, user_id, numberOfRecordsToKeep));
+        } else {
+            truncateNotifications(db, users.user, numberOfRecordsToKeep);
         }
         
         db.close();
     }
 
-    // could also have a function for storing results (columnNames and rows) in csv file ?
+    // get the user_id for all users that need truncation
+    private List<Integer> getUserIds(Database db) {
+        List<Integer> users = new ArrayList<Integer>();
+        // Could just get all users with notifications
+        // String sql = "SELECT DISTINCT user_id FROM usernotification;";
+        // Instead we want only users with to many notifications
+        String sql = String.format("SELECT user_id FROM usernotification GROUP BY user_id HAVING COUNT(user_id) > %d;", numberOfRecordsToKeep);
+        List<List<String>> results = db.query(sql);
+        for (List<String> row : results) {
+            users.add(Integer.parseInt(row.get(0)));
+        }
+        System.out.println("Number of users found: " + users.size());
+        return users;
+    }
+    
+    private void truncateNotifications(Database db, int user, int numberOfRecordsToKeep) {
+        //List<List<String>> results = db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%d';", user), true);
+        //System.out.println("Notifications for user " + user + ":");
+        //printResults(results);
 
+        // Sort of dry-run, show what will be deleted
+        // Note that the subquery is used to get the last n records to keep, we can not sort that in the outer query
+        // but the natural order of creation is also the senddate, so not a real problem here
+        List<List<String>> results = db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%d' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%d' ORDER BY senddate DESC LIMIT %d);", user, user, numberOfRecordsToKeep), true);
+        System.out.println("Notifications for user " + user + " that will be deleted:");
+        printResults(results);
+
+        // Actually delete the notifications
+        int rowCount = db.update(String.format("DELETE FROM usernotification WHERE user_id = '%d' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%d' ORDER BY senddate DESC LIMIT %d);", user, user, numberOfRecordsToKeep));
+        System.out.println("Deleted " + rowCount + " rows.");
+    }
+    
+    // could also have a function for storing results (columnNames and rows) in csv file ?
+    
     private void printResults(List<List<String>> results) {
-        // Note that the first row is actually the column names
+        // Note that the first row could be the column names
         for (List<String> row : results) {
             for (String cell : row) {
                 System.out.print(cell + " ");
@@ -95,19 +121,5 @@ public class NotificationTruncate extends AbstractCmd {
             System.out.println();
         }
     }
-
-    // show commandline input
-    private void printInput() {
-        System.out.println("Truncating notifications...");
-        System.out.println("Number of records to keep: " + numberOfRecordsToKeep);
-        System.out.println("User: " + (users.allUser ? "all users" : users.user));
-    }
     
-    // show database config
-    private void printConfig() {
-        System.out.println("Database config - host: " + dbcfg.getHost());
-        System.out.println("Database config - database: " + dbcfg.getDatabase());
-        System.out.println("Database config - user: " + dbcfg.getUser());
-        System.out.println("Database config - password: " + dbcfg.getPassword());
-    }
 }

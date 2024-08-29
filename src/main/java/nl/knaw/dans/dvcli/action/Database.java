@@ -30,6 +30,9 @@ import java.util.List;
  * Provides access to the Dataverse Database (Postgres).
  * Some actions are not supported by the Dataverse API (yet) 
  * and must be done by direct access to the database.
+ * 
+ * Note that the sql input strings are not filtered in any way, 
+ * so don't put user input in there!
  */
 public class Database {
     
@@ -78,8 +81,12 @@ public class Database {
             System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
         }
     }
-    
+
     public List<List<String>> query(String sql) {
+        return query(sql, false);
+    }
+    
+    public List<List<String>> query(String sql, Boolean startResultWithColumnNames) {
         List<List<String>> rows = new ArrayList<>();
         try {
             Statement stmt = connection.createStatement();
@@ -88,13 +95,17 @@ public class Database {
             // extract data from result set
             // get column names
             int numColumns = rs.getMetaData().getColumnCount();
-            List<String> columnNames = new ArrayList<String>();
-            for (int i = 1; i <= numColumns; i++) {
-                columnNames.add(rs.getMetaData().getColumnName(i));
+            
+            if (startResultWithColumnNames) {
+                List<String> columnNames = new ArrayList<String>();
+                for (int i = 1; i <= numColumns; i++) {
+                    columnNames.add(rs.getMetaData().getColumnName(i));
+                }
+                
+                // make it the first row, for simplicity, a bit like with a csv file
+                rows.add(columnNames);
             }
-
-            // make it the first row, for simplicity, a bit like with a csv file
-            rows.add(columnNames);
+            
             // get the data rows
             while (rs.next()) {
                 List<String> row = new ArrayList<String>();
