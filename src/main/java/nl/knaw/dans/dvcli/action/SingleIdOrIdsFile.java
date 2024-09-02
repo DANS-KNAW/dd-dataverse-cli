@@ -38,7 +38,7 @@ public class SingleIdOrIdsFile {
             return Stream.of(defaultId);
         }
 
-        Stream<String> lines = null;
+        Stream<String> lines;
 
         if ("-".equals(singleIdOrIdFile)) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -47,6 +47,9 @@ public class SingleIdOrIdsFile {
         else {
             var pidFile = Paths.get(singleIdOrIdFile);
             if (Files.exists(pidFile)) {
+                if (!Files.isRegularFile(pidFile)) {
+                    throw new IOException(singleIdOrIdFile + " is not a regular file");
+                }
                 lines = Files.lines(pidFile)
                     .flatMap(line -> Arrays.stream(line.trim().split("\\s+")));
             }
