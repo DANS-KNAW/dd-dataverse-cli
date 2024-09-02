@@ -46,14 +46,13 @@ public class Database {
     Connection connection = null;
 
     String port = "5432"; // Fixed port for Postgres
-    // TODO should come from config
+    
     String host;
     String database;
     String user;
     String password;
     
-    public void connect() {
-        try {
+    public void connect() throws ClassNotFoundException, SQLException {
             Class.forName("org.postgresql.Driver");
             if (connection == null) {
                 connection = DriverManager
@@ -61,9 +60,7 @@ public class Database {
                                 user,
                                 password);
             }
-        } catch (Exception e) {
-            System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
-        }
+
     }
     
     public void close() {
@@ -78,58 +75,51 @@ public class Database {
         }
     }
 
-    public List<List<String>> query(String sql) {
+    public List<List<String>> query(String sql) throws SQLException {
         return query(sql, false);
     }
     
-    public List<List<String>> query(String sql, Boolean startResultWithColumnNames) {
+    public List<List<String>> query(String sql, Boolean startResultWithColumnNames) throws SQLException {
         List<List<String>> rows = new ArrayList<>();
-        try {
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery( sql );
-            
-            // extract data from result set
-            // get column names
-            int numColumns = rs.getMetaData().getColumnCount();
-            
-            if (startResultWithColumnNames) {
-                List<String> columnNames = new ArrayList<String>();
-                for (int i = 1; i <= numColumns; i++) {
-                    columnNames.add(rs.getMetaData().getColumnName(i));
-                }
-                
-                // make it the first row, for simplicity, a bit like with a csv file
-                rows.add(columnNames);
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery( sql );
+        
+        // extract data from result set
+        
+        // get column names
+        int numColumns = rs.getMetaData().getColumnCount();
+        if (startResultWithColumnNames) {
+            List<String> columnNames = new ArrayList<String>();
+            for (int i = 1; i <= numColumns; i++) {
+                columnNames.add(rs.getMetaData().getColumnName(i));
             }
-            
-            // get the data rows
-            while (rs.next()) {
-                List<String> row = new ArrayList<String>();
-                for (int i = 1; i <= numColumns; i++) {
-                    row.add(rs.getString(i));
-                }
-                rows.add(row);
-            }
-            
-            // cleanup
-            rs.close();
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
+            // make it the first row, for simplicity, a bit like with a csv file
+            rows.add(columnNames);
         }
+        
+        // get the data rows
+        while (rs.next()) {
+            List<String> row = new ArrayList<String>();
+            for (int i = 1; i <= numColumns; i++) {
+                row.add(rs.getString(i));
+            }
+            rows.add(row);
+        }
+        
+        // cleanup
+        rs.close();
+        stmt.close();
         
         return rows;
     }
     
-    public int update(String sql) {
+    public int update(String sql) throws SQLException {
         int rowCount = 0;
-        try {
-            Statement stmt = connection.createStatement();
-            rowCount = stmt.executeUpdate( sql );
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println( "Database error: " + e.getClass().getName() + " " + e.getMessage() );
-        }
+
+        Statement stmt = connection.createStatement();
+        rowCount = stmt.executeUpdate( sql );
+        stmt.close();
+
         return rowCount;
     }
 }

@@ -26,6 +26,7 @@ import nl.knaw.dans.dvcli.config.DdDataverseDatabaseConfig;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,29 +83,32 @@ public class NotificationTruncate extends AbstractCmd {
             //);
             //return "Notifications for user " + notificationTruncateParams.userId + " that will be deleted: \n" 
             //        + getResultsAsString(results);
-
+            
             // Actually delete the notifications
-            int rowCount = notificationTruncateParams.db.update(String.format("DELETE FROM usernotification WHERE user_id = '%d' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%d' ORDER BY senddate DESC LIMIT %d);",
-                    notificationTruncateParams.userId, notificationTruncateParams.userId,
-                    notificationTruncateParams.numberOfRecordsToKeep));
-            return "Deleted " + rowCount + " record(s) for user with id " + notificationTruncateParams.userId;
+            try {
+                int rowCount = notificationTruncateParams.db.update(String.format("DELETE FROM usernotification WHERE user_id = '%d' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%d' ORDER BY senddate DESC LIMIT %d);",
+                        notificationTruncateParams.userId, notificationTruncateParams.userId,
+                        notificationTruncateParams.numberOfRecordsToKeep));
+                return "Deleted " + rowCount + " record(s) for user with id " + notificationTruncateParams.userId;
+            } catch (SQLException e) {
+                throw new Exception("Error deleting notifications for user with id " + notificationTruncateParams.userId, e);
+            }
         }
     }
     
     @Override
-    public void doCall() throws IOException {
-        log.debug("Truncating notifications");
-        
+    public void doCall() throws Exception {
         // validate input
         if (numberOfRecordsToKeep < 0) {
-            System.err.println("Number of records to keep must be a positive integer.");
-            return; // or should we throw an exception or exit(2) ?
+            //System.err.println("Number of records to keep must be a positive integer, now it was \" + numberOfRecordsToKeep + \".\"");
+            //return; // or should we throw an exception or exit(2) ?
+            throw new Exception("Number of records to keep must be a positive integer, now it was " + numberOfRecordsToKeep + ".");
         }
         
         // Connect to database
         db = new Database(dbCfg);
         db.connect();
-
+        
         paramsBatchProcessorBuilder()
                 .labeledItems(getItems())
                 .action(new NotificationTruncate.NotificationTruncateAction())
@@ -112,26 +116,28 @@ public class NotificationTruncate extends AbstractCmd {
                 .build()
                 .process();
 
-        db.close();
+        db.close(); // Not called if anny exception is thrown above!
     }
     
-    protected List<Pair<String, NotificationTruncateParams>> getItems() throws IOException {
+    protected List<Pair<String, NotificationTruncateParams>> getItems() throws Exception {
         List<Pair<String, NotificationTruncateParams>> items = new ArrayList<>();
-
-        if (users.allUsers) {
-            getUserIds(db).forEach(user_id -> items.add(new Pair<>(Integer.toString(user_id), 
-                    new NotificationTruncateParams(db, user_id, numberOfRecordsToKeep))));
-        } else {
-            // single user
-            items.add(new Pair<>(Integer.toString(users.user), 
-                    new NotificationTruncateParams(db, users.user, numberOfRecordsToKeep)));
-        } 
-        
+        try {
+            if (users.allUsers) {
+                getUserIds(db).forEach(user_id -> items.add(new Pair<>(Integer.toString(user_id),
+                        new NotificationTruncateParams(db, user_id, numberOfRecordsToKeep))));
+            } else {
+                // single user
+                items.add(new Pair<>(Integer.toString(users.user),
+                        new NotificationTruncateParams(db, users.user, numberOfRecordsToKeep)));
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error getting user ids: ", e);
+        }
         return items;
     }
 
     // get the user_id for all users that need truncation
-    private List<Integer> getUserIds(Database db) {
+    private List<Integer> getUserIds(Database db) throws SQLException {
         List<Integer> users = new ArrayList<Integer>();
         // Could just get all users with notifications
         // String sql = "SELECT DISTINCT user_id FROM usernotification;";
