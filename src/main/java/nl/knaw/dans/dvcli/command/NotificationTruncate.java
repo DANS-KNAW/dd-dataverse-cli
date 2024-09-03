@@ -87,6 +87,7 @@ public class NotificationTruncate extends AbstractCmd {
             
             // Actually delete the notifications
             try {
+                log.info("Deleting notifications for user with id " + notificationTruncateParams.userId);
                 int rowCount = notificationTruncateParams.db.update(String.format("DELETE FROM usernotification WHERE user_id = '%d' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%d' ORDER BY senddate DESC LIMIT %d);",
                         notificationTruncateParams.userId, notificationTruncateParams.userId,
                         notificationTruncateParams.numberOfRecordsToKeep));
@@ -110,9 +111,12 @@ public class NotificationTruncate extends AbstractCmd {
         //db = new Database(dbCfg);
         db.connect();
         
+        log.info("Starting batch processing");
+        
         paramsBatchProcessorBuilder()
                 .labeledItems(getItems())
                 .action(new NotificationTruncate.NotificationTruncateAction())
+                .delay(10L) // 10 ms, database should be able to handle this
                 .report(new ConsoleReport<>())
                 .build()
                 .process();
