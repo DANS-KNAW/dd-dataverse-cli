@@ -17,6 +17,7 @@
 package nl.knaw.dans.dvcli;
 
 import lombok.extern.slf4j.Slf4j;
+import nl.knaw.dans.dvcli.action.Database;
 import nl.knaw.dans.dvcli.command.CollectionAssignRole;
 import nl.knaw.dans.dvcli.command.CollectionCmd;
 import nl.knaw.dans.dvcli.command.CollectionCreateDataset;
@@ -35,6 +36,7 @@ import nl.knaw.dans.dvcli.command.DatasetCmd;
 import nl.knaw.dans.dvcli.command.DeleteDraft;
 import nl.knaw.dans.dvcli.command.NotificationTruncate;
 import nl.knaw.dans.dvcli.config.DdDataverseCliConfig;
+import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.util.AbstractCommandLineApp;
 import nl.knaw.dans.lib.util.PicocliVersionProvider;
 import picocli.CommandLine;
@@ -59,6 +61,8 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
         log.debug("Building Dataverse client");
         var dataverseClient = config.getDataverse().build();
         var databaseConfig = config.getDb();
+        var database = new Database(databaseConfig);
+        
         commandLine.addSubcommand(new CommandLine(new CollectionCmd(dataverseClient))
                 .addSubcommand(new CollectionAssignRole())
                 .addSubcommand(new CollectionCreateDataset())
@@ -76,7 +80,7 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
             .addSubcommand(new CommandLine(new DatasetCmd(dataverseClient))
                 .addSubcommand(new DeleteDraft())
             )
-            .addSubcommand(new CommandLine(new NotificationTruncate(databaseConfig)));
+            .addSubcommand(new CommandLine(new NotificationTruncate(database)));
         log.debug("Configuring command line");
     }
 }

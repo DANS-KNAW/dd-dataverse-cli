@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.dvcli.command;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.dvcli.action.BatchProcessor;
 import nl.knaw.dans.dvcli.action.ConsoleReport;
@@ -36,12 +37,12 @@ import java.util.List;
         sortOptions = false)
 @Slf4j
 public class NotificationTruncate extends AbstractCmd {
-    DdDataverseDatabaseConfig dbCfg;
-    public NotificationTruncate(DdDataverseDatabaseConfig dbCfg) {
-        this.dbCfg = dbCfg;
+    //DdDataverseDatabaseConfig dbCfg;
+    protected Database db;
+    public NotificationTruncate(@NonNull Database database) {
+        this.db = database;
     }
 
-    protected Database db;
     
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     UserOptions users;
@@ -49,12 +50,12 @@ public class NotificationTruncate extends AbstractCmd {
     static class UserOptions {
         @CommandLine.Option(names = { "--user" }, required = true, 
                 description = "The user whose notifications to truncate.")
-        private int user; // a number, preventing accidental SQL injection
+        int user; // a number, preventing accidental SQL injection
         // This id is visible in the Dataverse Dashboard for 'superusers' 
         
         @CommandLine.Option(names = { "--all-users" }, required = true, 
                 description = "Truncate notifications for all users.")
-        private boolean allUsers;
+        boolean allUsers;
     }
     
     @CommandLine.Parameters(index = "0", paramLabel = "number-of-records-to-keep", 
@@ -106,7 +107,7 @@ public class NotificationTruncate extends AbstractCmd {
         }
         
         // Connect to database
-        db = new Database(dbCfg);
+        //db = new Database(dbCfg);
         db.connect();
         
         paramsBatchProcessorBuilder()
