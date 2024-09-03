@@ -1,4 +1,4 @@
-dataverse:
+api:
   baseUrl: "http://dev.archaeology.datastations.nl:8080"
   apiKey: # fill in your API key here
   

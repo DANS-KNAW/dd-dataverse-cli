@@ -59,7 +59,7 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
     @Override
     public void configureCommandLine(CommandLine commandLine, DdDataverseCliConfig config) {
         log.debug("Building Dataverse client");
-        var dataverseClient = config.getDataverse().build();
+        var dataverseClient = config.getApi().build();
         var databaseConfig = config.getDb();
         var database = new Database(databaseConfig);
         

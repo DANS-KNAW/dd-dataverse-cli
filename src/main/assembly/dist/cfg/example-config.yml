@@ -1,4 +1,4 @@
-dataverse:
+api:
   baseUrl: "http://localhost:8080"
   apiKey: "your-api-token"
 

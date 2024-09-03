@@ -25,7 +25,7 @@ import nl.knaw.dans.lib.util.DataverseClientFactory;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DdDataverseCliConfig extends Configuration {
-    private DataverseClientFactory dataverse;
+    private DataverseClientFactory api;
     
     @NonNull
     private DdDataverseDatabaseConfig db = new DdDataverseDatabaseConfig();
