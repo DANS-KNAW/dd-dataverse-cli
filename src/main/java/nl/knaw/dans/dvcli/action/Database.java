@@ -15,9 +15,9 @@
  */
 package nl.knaw.dans.dvcli.action;
 
+import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.dvcli.config.DdDataverseDatabaseConfig;
 
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -34,6 +34,7 @@ import java.util.List;
  * Note that the sql input strings are not filtered in any way, 
  * so don't put user input in there!
  */
+@Slf4j
 public class Database {
     
     public Database(DdDataverseDatabaseConfig config) {
@@ -55,6 +56,7 @@ public class Database {
     public void connect() throws ClassNotFoundException, SQLException {
             Class.forName("org.postgresql.Driver");
             if (connection == null) {
+                log.info("Starting connecting to database");
                 connection = DriverManager
                         .getConnection("jdbc:postgresql://" + host + ":" + port + "/" + database,
                                 user,
@@ -66,6 +68,7 @@ public class Database {
     public void close() {
         try {
             if (connection != null) {
+                log.info("Close connection to database");
                 connection.close();
             }
         } catch (SQLException e) {
@@ -80,12 +83,20 @@ public class Database {
     }
     
     public List<List<String>> query(String sql, Boolean startResultWithColumnNames) throws SQLException {
-        List<List<String>> rows = new ArrayList<>();
+        log.info("Qerying database with: " + sql);
+        
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery( sql );
+        List<List<String>> rows = extractResult(rs, startResultWithColumnNames);
         
-        // extract data from result set
+        rs.close();
+        stmt.close();
         
+        return rows;
+    }
+
+    List<List<String>> extractResult(ResultSet rs, Boolean startResultWithColumnNames) throws SQLException {
+        List<List<String>> rows = new ArrayList<>();
         // get column names
         int numColumns = rs.getMetaData().getColumnCount();
         if (startResultWithColumnNames) {
@@ -96,7 +107,7 @@ public class Database {
             // make it the first row, for simplicity, a bit like with a csv file
             rows.add(columnNames);
         }
-        
+
         // get the data rows
         while (rs.next()) {
             List<String> row = new ArrayList<String>();
@@ -105,15 +116,11 @@ public class Database {
             }
             rows.add(row);
         }
-        
-        // cleanup
-        rs.close();
-        stmt.close();
-        
         return rows;
     }
-    
+
     public int update(String sql) throws SQLException {
+        log.info("Updating database with: " + sql);
         int rowCount = 0;
 
         Statement stmt = connection.createStatement();
