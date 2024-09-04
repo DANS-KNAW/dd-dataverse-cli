@@ -56,7 +56,7 @@ public class Database {
     public void connect() throws ClassNotFoundException, SQLException {
             Class.forName("org.postgresql.Driver");
             if (connection == null) {
-                log.info("Starting connecting to database");
+                log.debug("Starting connecting to database");
                 connection = DriverManager
                         .getConnection("jdbc:postgresql://" + host + ":" + port + "/" + database,
                                 user,
@@ -68,7 +68,7 @@ public class Database {
     public void close() {
         try {
             if (connection != null) {
-                log.info("Close connection to database");
+                log.debug("Close connection to database");
                 connection.close();
             }
         } catch (SQLException e) {
@@ -83,7 +83,7 @@ public class Database {
     }
     
     public List<List<String>> query(String sql, Boolean startResultWithColumnNames) throws SQLException {
-        log.info("Qerying database with: " + sql);
+        log.debug("Qerying database with: " + sql);
         
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery( sql );
@@ -120,7 +120,7 @@ public class Database {
     }
 
     public int update(String sql) throws SQLException {
-        log.info("Updating database with: " + sql);
+        log.debug("Updating database with: " + sql);
         int rowCount = 0;
 
         Statement stmt = connection.createStatement();

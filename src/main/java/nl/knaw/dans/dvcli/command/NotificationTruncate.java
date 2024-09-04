@@ -37,7 +37,6 @@ import java.util.List;
         sortOptions = false)
 @Slf4j
 public class NotificationTruncate extends AbstractCmd {
-    //DdDataverseDatabaseConfig dbCfg;
     protected Database db;
     public NotificationTruncate(@NonNull Database database) {
         this.db = database;
@@ -51,7 +50,7 @@ public class NotificationTruncate extends AbstractCmd {
         @CommandLine.Option(names = { "--user" }, required = true, 
                 description = "The user whose notifications to truncate.")
         int user; // a number, preventing accidental SQL injection
-        // This id is visible in the Dataverse Dashboard for 'superusers' 
+        // This id is visible for 'superusers' in the Dataverse Dashboard
         
         @CommandLine.Option(names = { "--all-users" }, required = true, 
                 description = "Truncate notifications for all users.")
@@ -61,23 +60,20 @@ public class NotificationTruncate extends AbstractCmd {
     @CommandLine.Parameters(index = "0", paramLabel = "number-of-records-to-keep", 
             description = "The number of notification records to keep.")
     private int numberOfRecordsToKeep;
-
-//    @CommandLine.Option(names = { "-d", "--delay" }, description = "Delay in milliseconds between requests to the server (default: ${DEFAULT-VALUE}).", defaultValue = "" + DEFAULT_DELAY)
-//    protected long delay;
     
     private record NotificationTruncateParams(Database db, int userId, int numberOfRecordsToKeep) {
     }
 
     protected <NotificationTruncateParams> BatchProcessor.BatchProcessorBuilder<NotificationTruncate.NotificationTruncateParams, String> paramsBatchProcessorBuilder() throws IOException {
         return BatchProcessor.<NotificationTruncate.NotificationTruncateParams, String> builder();
-                //.delay(delay);
+
     }
     
     private static class NotificationTruncateAction implements ThrowingFunction<NotificationTruncate.NotificationTruncateParams, String, Exception> {
 
         @Override
         public String apply(NotificationTruncateParams notificationTruncateParams) throws Exception {
-            // Dry-run for now, show what will be deleted
+            // Dry-run; show what will be deleted
             //List<List<String>> results = notificationTruncateParams.db.query(String.format("SELECT * FROM usernotification WHERE user_id = '%d' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%d' ORDER BY senddate DESC LIMIT %d);", 
             //        notificationTruncateParams.userId, notificationTruncateParams.userId, 
             //        notificationTruncateParams.numberOfRecordsToKeep), true
@@ -102,16 +98,12 @@ public class NotificationTruncate extends AbstractCmd {
     public void doCall() throws Exception {
         // validate input
         if (numberOfRecordsToKeep < 0) {
-            //System.err.println("Number of records to keep must be a positive integer, now it was \" + numberOfRecordsToKeep + \".\"");
-            //return; // or should we throw an exception or exit(2) ?
             throw new Exception("Number of records to keep must be a positive integer, now it was " + numberOfRecordsToKeep + ".");
         }
         
         // Connect to database
         //db = new Database(dbCfg);
         db.connect();
-        
-        log.info("Starting batch processing");
         
         paramsBatchProcessorBuilder()
                 .labeledItems(getItems())
@@ -152,7 +144,6 @@ public class NotificationTruncate extends AbstractCmd {
         for (List<String> row : results) {
             users.add(Integer.parseInt(row.get(0)));
         }
-        System.out.println("Number of users found for notification truncation: " + users.size());
         return users;
     }
     

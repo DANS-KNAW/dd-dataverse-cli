@@ -34,6 +34,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+
 public class NotificationTruncateTest extends AbstractCapturingTest {
 
     private final InputStream originalStdin = System.in;
@@ -99,8 +100,6 @@ public class NotificationTruncateTest extends AbstractCapturingTest {
         
         assertThat(stderr.toString()).isEqualTo("1: OK. 2: OK. 3: OK. ");
         assertThat(stdout.toString()).isEqualTo("""
-            INFO  Starting batch processing
-            Number of users found for notification truncation: 3
             INFO  Starting batch processing
             INFO  Processing item 1 of 3
             INFO  Deleting notifications for user with id 1
