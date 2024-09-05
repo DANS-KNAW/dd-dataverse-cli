@@ -4,9 +4,9 @@ api:
 
 db:
   host: localhost
-  database: "dvndb";
-  user: "dvnuser";
-  password: "dvnsecret";
+  database: "dvndb"
+  user: "dvnuser"
+  password: "dvnsecret"
 
 #
 # See https://www.dropwizard.io/en/latest/manual/configuration.html#logging

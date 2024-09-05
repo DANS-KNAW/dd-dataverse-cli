@@ -1,7 +1,13 @@
 api:
   baseUrl: "http://dev.archaeology.datastations.nl:8080"
   apiKey: # fill in your API key here
-  
+
+db:
+  host: localhost
+  database: "dvndb"
+  user: "dvnuser"
+  password: "dvnsecret"
+
 #
 # See https://www.dropwizard.io/en/latest/manual/configuration.html#logging
 #
