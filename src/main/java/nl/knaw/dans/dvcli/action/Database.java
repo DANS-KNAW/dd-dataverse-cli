@@ -85,14 +85,12 @@ public class Database {
     public List<List<String>> query(String sql, Boolean startResultWithColumnNames) throws SQLException {
         log.debug("Qerying database with: " + sql);
         
-        Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery( sql );
-        List<List<String>> rows = extractResult(rs, startResultWithColumnNames);
-        
-        rs.close();
-        stmt.close();
-        
-        return rows;
+        try (
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql)
+        ) {
+            return extractResult(rs, startResultWithColumnNames);
+        }
     }
 
     List<List<String>> extractResult(ResultSet rs, Boolean startResultWithColumnNames) throws SQLException {
@@ -121,12 +119,9 @@ public class Database {
 
     public int update(String sql) throws SQLException {
         log.debug("Updating database with: " + sql);
-        int rowCount = 0;
 
-        Statement stmt = connection.createStatement();
-        rowCount = stmt.executeUpdate( sql );
-        stmt.close();
-
-        return rowCount;
+        try (Statement stmt = connection.createStatement()) {
+            return stmt.executeUpdate(sql);
+        }
     }
 }
