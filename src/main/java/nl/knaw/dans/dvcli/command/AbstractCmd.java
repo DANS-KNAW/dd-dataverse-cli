@@ -35,5 +35,5 @@ public abstract class AbstractCmd implements Callable<Integer> {
         }
     }
 
-    public abstract void doCall() throws Exception, DataverseException;
+    public abstract void doCall() throws Exception;
 }
