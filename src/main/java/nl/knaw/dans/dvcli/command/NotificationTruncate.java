@@ -49,7 +49,7 @@ public class NotificationTruncate extends AbstractCmd {
 
     static class UserOptions {
         @CommandLine.Option(names = { "--user" }, required = true, 
-                description = "The user whose notifications to truncate.")
+                description = "The user database id (a number) whose notifications to truncate.")
         int user; // a number, preventing accidental SQL injection
         // This id is visible for 'superusers' in the Dataverse Dashboard
         
