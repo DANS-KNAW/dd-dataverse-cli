@@ -67,7 +67,7 @@ public class NotificationTruncate extends AbstractCmd {
     private record NotificationTruncateParams(Database db, int userId, int numberOfRecordsToKeep) {
     }
 
-    protected <NotificationTruncateParams> BatchProcessor.BatchProcessorBuilder<NotificationTruncate.NotificationTruncateParams, String> paramsBatchProcessorBuilder() throws IOException {
+    private BatchProcessor.BatchProcessorBuilder<NotificationTruncate.NotificationTruncateParams, String> paramsBatchProcessorBuilder() throws IOException {
         return BatchProcessor.<NotificationTruncate.NotificationTruncateParams, String> builder();
     }
     
@@ -85,7 +85,7 @@ public class NotificationTruncate extends AbstractCmd {
             
             // Actually delete the notifications
             try {
-                log.info("Deleting notifications for user with id " + notificationTruncateParams.userId);
+                log.info("Deleting notifications for user with id {}", notificationTruncateParams.userId);
                 int rowCount = notificationTruncateParams.db.update(String.format("DELETE FROM usernotification WHERE user_id = '%d' AND id NOT IN (SELECT id FROM usernotification WHERE user_id = '%d' ORDER BY senddate DESC LIMIT %d);",
                         notificationTruncateParams.userId, notificationTruncateParams.userId,
                         notificationTruncateParams.numberOfRecordsToKeep));
@@ -117,7 +117,7 @@ public class NotificationTruncate extends AbstractCmd {
         }
     }
     
-    protected List<Pair<String, NotificationTruncateParams>> getItems() throws Exception {
+    List<Pair<String, NotificationTruncateParams>> getItems() throws Exception {
         List<Pair<String, NotificationTruncateParams>> items = new ArrayList<>();
         try {
             if (users.allUsers) {

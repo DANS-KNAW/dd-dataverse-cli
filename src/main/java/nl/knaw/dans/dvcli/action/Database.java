@@ -30,7 +30,7 @@ import java.util.List;
  * Provides access to the Dataverse Database (Postgres).
  * Some actions are not supported by the Dataverse API (yet) 
  * and must be done by direct access to the database.
- * 
+ * <p> 
  * Note that the sql input strings are not filtered in any way, 
  * so don't put user input in there!
  */
@@ -83,7 +83,7 @@ public class Database {
     }
     
     public List<List<String>> query(String sql, Boolean startResultWithColumnNames) throws SQLException {
-        log.debug("Qerying database with: " + sql);
+        log.debug("Querying database with: {}", sql);
         
         try (
             Statement stmt = connection.createStatement();
@@ -118,7 +118,7 @@ public class Database {
     }
 
     public int update(String sql) throws SQLException {
-        log.debug("Updating database with: " + sql);
+        log.debug("Updating database with: {}", sql);
 
         try (Statement stmt = connection.createStatement()) {
             return stmt.executeUpdate(sql);
