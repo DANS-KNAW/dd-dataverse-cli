@@ -103,19 +103,18 @@ public class NotificationTruncate extends AbstractCmd {
             throw new Exception("Number of records to keep must be a positive integer, now it was " + numberOfRecordsToKeep + ".");
         }
         
-        // Connect to database
-        //db = new Database(dbCfg);
         db.connect();
-        
-        paramsBatchProcessorBuilder()
-                .labeledItems(getItems())
-                .action(new NotificationTruncate.NotificationTruncateAction())
-                .delay(10L) // 10 ms, database should be able to handle this
-                .report(new ConsoleReport<>())
-                .build()
-                .process();
-
-        db.close(); // Not called if anny exception is thrown above!
+        try {
+            paramsBatchProcessorBuilder()
+                    .labeledItems(getItems())
+                    .action(new NotificationTruncate.NotificationTruncateAction())
+                    .delay(10L) // 10 ms, database should be able to handle this
+                    .report(new ConsoleReport<>())
+                    .build()
+                    .process();
+        } finally {
+            db.close();
+        }
     }
     
     protected List<Pair<String, NotificationTruncateParams>> getItems() throws Exception {
