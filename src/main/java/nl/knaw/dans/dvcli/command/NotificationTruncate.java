@@ -60,7 +60,6 @@ public class NotificationTruncate extends AbstractCmd {
     
     @CommandLine.Parameters(index = "0", paramLabel = "number-of-records-to-keep", 
             description = "The number of notification records to keep.")
-    @Positive
     private int numberOfRecordsToKeep;
     
     private record NotificationTruncateParams(Database db, int userId, int numberOfRecordsToKeep) {
