@@ -22,11 +22,9 @@ import nl.knaw.dans.dvcli.action.ConsoleReport;
 import nl.knaw.dans.dvcli.action.Database;
 import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.dvcli.action.ThrowingFunction;
-import nl.knaw.dans.dvcli.config.DdDataverseDatabaseConfig;
 
 import picocli.CommandLine;
 
-import javax.validation.constraints.Positive;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -43,6 +41,10 @@ public class NotificationTruncate extends AbstractCmd {
         this.db = database;
     }
 
+    private static final long DEFAULT_DELAY = 10L; // 10 ms, database should be able to handle this
+    
+    @CommandLine.Option(names = { "-d", "--delay" }, description = "Delay in milliseconds between requests to the server (default: ${DEFAULT-VALUE}).", defaultValue = "" + DEFAULT_DELAY)
+    protected long delay = DEFAULT_DELAY;
     
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     UserOptions users;
@@ -67,7 +69,6 @@ public class NotificationTruncate extends AbstractCmd {
 
     protected <NotificationTruncateParams> BatchProcessor.BatchProcessorBuilder<NotificationTruncate.NotificationTruncateParams, String> paramsBatchProcessorBuilder() throws IOException {
         return BatchProcessor.<NotificationTruncate.NotificationTruncateParams, String> builder();
-
     }
     
     private static class NotificationTruncateAction implements ThrowingFunction<NotificationTruncate.NotificationTruncateParams, String, Exception> {
@@ -107,7 +108,7 @@ public class NotificationTruncate extends AbstractCmd {
             paramsBatchProcessorBuilder()
                     .labeledItems(getItems())
                     .action(new NotificationTruncate.NotificationTruncateAction())
-                    .delay(10L) // 10 ms, database should be able to handle this
+                    .delay(delay)
                     .report(new ConsoleReport<>())
                     .build()
                     .process();

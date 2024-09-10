@@ -20,8 +20,6 @@ import nl.knaw.dans.dvcli.action.Database;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-
-import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
 
