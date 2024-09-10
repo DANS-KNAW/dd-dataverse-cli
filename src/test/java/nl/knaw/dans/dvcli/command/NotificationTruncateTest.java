@@ -37,11 +37,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class NotificationTruncateTest extends AbstractCapturingTest {
 
-    private final InputStream originalStdin = System.in;
-
     @Test
     public void doCall_with_wrong_database_connection_fails() throws Exception {
-        System.setIn(originalStdin);
 
         var database = Mockito.mock(Database.class);
         doThrow(new SQLException("test database fails to connect")).when(database).connect();
@@ -59,8 +56,6 @@ public class NotificationTruncateTest extends AbstractCapturingTest {
 
     @Test
     public void doCall_with_negative_numberOfRecordsToKeep_fails() throws Exception {
-        System.setIn(originalStdin);
-
         var database = Mockito.mock(Database.class);
  
         var userOptions = new NotificationTruncate.UserOptions();
@@ -76,8 +71,6 @@ public class NotificationTruncateTest extends AbstractCapturingTest {
     
     @Test
     public void doCall_with_several_users_to_truncate_notifications_works() throws Exception {
-        System.setIn(originalStdin);
-
         var database = Mockito.mock(Database.class);
         
         Mockito.doNothing().when(database).connect();
