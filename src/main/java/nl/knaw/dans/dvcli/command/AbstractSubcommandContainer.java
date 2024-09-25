@@ -39,7 +39,6 @@ public abstract class AbstractSubcommandContainer<T> extends AbstractCmd {
 
     @Parameters(index = "0", description = "The target(s) of the operation; this is either an ID a file with a with a list of IDs, or - if the subcommand supports it - a parameters file.",
                 paramLabel = "targets", defaultValue = SingleIdOrIdsFile.DEFAULT_TARGET_PLACEHOLDER)
-
     protected String targets;
 
     @Option(names = { "-d", "--delay" }, description = "Delay in milliseconds between requests to the server (default: ${DEFAULT-VALUE}).", defaultValue = "" + DEFAULT_DELAY)

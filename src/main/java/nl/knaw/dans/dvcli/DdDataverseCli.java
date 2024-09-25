@@ -37,11 +37,11 @@ import nl.knaw.dans.dvcli.command.DatasetGetFiles;
 import nl.knaw.dans.dvcli.command.DatasetGetLatestVersion;
 import nl.knaw.dans.dvcli.command.DatasetGetVersion;
 import nl.knaw.dans.dvcli.command.DatasetPublish;
-import nl.knaw.dans.dvcli.command.DatasetRoleAssignment;
+import nl.knaw.dans.dvcli.command.DatasetRoleAssignment2;
+import nl.knaw.dans.dvcli.command.DatasetRoleAssignmentList;
 import nl.knaw.dans.dvcli.command.DatasetValidateFiles;
 import nl.knaw.dans.dvcli.command.NotificationTruncate;
 import nl.knaw.dans.dvcli.config.DdDataverseCliConfig;
-import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.util.AbstractCommandLineApp;
 import nl.knaw.dans.lib.util.PicocliVersionProvider;
 import picocli.CommandLine;
@@ -87,7 +87,8 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
                 .addSubcommand(new DatasetGetLatestVersion())
                 .addSubcommand(new DatasetGetVersion())
                 .addSubcommand(new DatasetPublish())
-                .addSubcommand(new DatasetRoleAssignment())
+                .addSubcommand(new CommandLine(new DatasetRoleAssignment2())
+                    .addSubcommand(new DatasetRoleAssignmentList()))
                 .addSubcommand(new DatasetValidateFiles())
             )
             .addSubcommand(new CommandLine(new NotificationTruncate(database)));
