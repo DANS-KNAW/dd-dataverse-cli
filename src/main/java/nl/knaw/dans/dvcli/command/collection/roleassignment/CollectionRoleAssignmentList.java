@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.collection.roleassignment;
 
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
 
-@Command(name = "get-files",
+@Command(name = "list",
          mixinStandardHelpOptions = true,
-         description = "Get a list of file metadata.")
-public class DatasetGetFiles extends AbstractCmd {
+         description = "List role assignments in a Dataverse collection.")
+public class CollectionRoleAssignmentList extends AbstractCmd {
     @ParentCommand
-    private DatasetCmd datasetCmd;
-
-    @Parameters(index = "0", paramLabel = "version", description = "version to get file metadata from.")
-    private String version;
+    private CollectionRoleAssignment collectionRoleAssignment;
 
     @Override
-    public void doCall() throws IOException, DataverseException {
-        datasetCmd.batchProcessor(d -> d.getFiles(version).getEnvelopeAsString()).process();
+    public void doCall() throws DataverseException, IOException {
+        collectionRoleAssignment.getCollectionCmd().batchProcessor(d -> d.listRoleAssignments().getEnvelopeAsString()).process();
     }
 }

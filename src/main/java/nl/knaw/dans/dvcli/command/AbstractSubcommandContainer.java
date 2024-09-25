@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.dvcli.command;
 
+import lombok.Getter;
 import lombok.NonNull;
 import nl.knaw.dans.dvcli.action.BatchProcessor;
 import nl.knaw.dans.dvcli.action.Pair;
@@ -31,6 +32,7 @@ import java.util.List;
 public abstract class AbstractSubcommandContainer<T> extends AbstractCmd {
     private static final long DEFAULT_DELAY = 1000;
 
+    @Getter
     protected DataverseClient dataverseClient;
 
     public AbstractSubcommandContainer(@NonNull DataverseClient dataverseClient) {
@@ -39,18 +41,19 @@ public abstract class AbstractSubcommandContainer<T> extends AbstractCmd {
 
     @Parameters(index = "0", description = "The target(s) of the operation; this is either an ID a file with a with a list of IDs, or - if the subcommand supports it - a parameters file.",
                 paramLabel = "targets", defaultValue = SingleIdOrIdsFile.DEFAULT_TARGET_PLACEHOLDER)
-    protected String targets;
+    @Getter
+    private String targets;
 
     @Option(names = { "-d", "--delay" }, description = "Delay in milliseconds between requests to the server (default: ${DEFAULT-VALUE}).", defaultValue = "" + DEFAULT_DELAY)
     protected long delay;
 
-    protected BatchProcessor.BatchProcessorBuilder<T, String> batchProcessorBuilder() throws IOException {
+    public BatchProcessor.BatchProcessorBuilder<T, String> batchProcessorBuilder() throws IOException {
         return BatchProcessor.<T, String> builder()
             .labeledItems(getItems())
             .delay(delay);
     }
 
-    protected <P> BatchProcessor.BatchProcessorBuilder<P, String> paramsBatchProcessorBuilder() {
+    public <P> BatchProcessor.BatchProcessorBuilder<P, String> paramsBatchProcessorBuilder() {
         return BatchProcessor.<P, String> builder()
             .delay(delay);
     }

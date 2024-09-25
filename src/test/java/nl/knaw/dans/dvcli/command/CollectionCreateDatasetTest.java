@@ -16,6 +16,8 @@
 package nl.knaw.dans.dvcli.command;
 
 import nl.knaw.dans.dvcli.AbstractCapturingTest;
+import nl.knaw.dans.dvcli.command.collection.CollectionCmd;
+import nl.knaw.dans.dvcli.command.collection.CollectionCreateDataset;
 import nl.knaw.dans.lib.dataverse.DataverseApi;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;

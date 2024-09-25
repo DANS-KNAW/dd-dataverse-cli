@@ -17,6 +17,8 @@ package nl.knaw.dans.dvcli.command;
 
 import nl.knaw.dans.dvcli.AbstractCapturingTest;
 import nl.knaw.dans.dvcli.action.Pair;
+import nl.knaw.dans.dvcli.command.collection.CollectionCmd;
+import nl.knaw.dans.dvcli.command.dataset.DatasetCmd;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import org.junit.jupiter.api.Test;
@@ -37,7 +39,14 @@ public class AbstractSubcommandContainerTest extends AbstractCapturingTest {
 
         public TestCmd(String targets) {
             super(new DataverseClient(null));
-            this.targets = targets;
+            // Inject target with reflection
+            try {
+                var targetsField = AbstractSubcommandContainer.class.getDeclaredField("targets");
+                targetsField.setAccessible(true);
+                targetsField.set(this, targets);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                log.error("Failed to inject targets", e);
+            }
         }
 
         @Override

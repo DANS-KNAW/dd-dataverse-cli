@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Abstract class for subcommands that assign roles to items.
+ * Abstract class for subcommands that assign roles to items. This is used for both datasets and dataverses (collections).
  *
  * @param <C> the type of the subcommand container
  * @param <A> the type of API object that gives the command access to the item

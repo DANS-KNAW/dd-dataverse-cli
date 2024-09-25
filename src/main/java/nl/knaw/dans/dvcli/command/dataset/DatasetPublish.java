@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.dataset;
 
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import nl.knaw.dans.lib.dataverse.model.dataset.UpdateType;
 import picocli.CommandLine.ArgGroup;

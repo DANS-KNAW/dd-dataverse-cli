@@ -13,39 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.collection;
 
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
 
-@Command(name = "get-version",
+@Command(name = "is-metadata-blocks-root",
          mixinStandardHelpOptions = true,
-         description = "Returns an object containing the dataset version metadata.")
-public class DatasetGetVersion extends AbstractCmd {
+         description = "Determine if a dataverse collection inherits its metadata blocks from its parent.")
+public class CollectionIsMetadataBlocksRoot extends AbstractCmd {
     @ParentCommand
-    private DatasetCmd datasetCmd;
-
-    @ArgGroup(exclusive = true, multiplicity = "1")
-    VersionInfo versionInfo;
-
-    static class VersionInfo {
-        @Parameters(description = "Specified a version to retrieve.")
-        String version = "";
-        @Option(names = "--all", description = "Get all versions")
-        boolean allVersions;
-    }
+    private CollectionCmd collectionCmd;
 
     @Override
     public void doCall() throws IOException, DataverseException {
-        datasetCmd.batchProcessor(d ->
-                versionInfo.allVersions ? d.getAllVersions().getEnvelopeAsString() : d.getVersion(versionInfo.version).getEnvelopeAsString()
-            )
-            .process();
+        collectionCmd.batchProcessor(c -> c.isMetadataBlocksRoot().getEnvelopeAsString()).process();
     }
 }

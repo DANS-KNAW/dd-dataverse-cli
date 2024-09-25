@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.dataset.roleassignment;
 
-import nl.knaw.dans.lib.dataverse.DataverseException;
+import lombok.Getter;
+import nl.knaw.dans.dvcli.command.AbstractCmd;
+import nl.knaw.dans.dvcli.command.dataset.DatasetCmd;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
-import java.io.IOException;
-
-@Command(name = "get-latest-version",
+@Command(name = "role-assignment",
          mixinStandardHelpOptions = true,
-         description = "A JSON object that starts at the dataset level, most fields are replicated at the dataset version level.")
-public class DatasetGetLatestVersion extends AbstractCmd {
+         description = "Manage role assignments.")
+@Getter
+public class DatasetRoleAssignment extends AbstractCmd {
     @ParentCommand
     private DatasetCmd datasetCmd;
 
     @Override
-    public void doCall() throws IOException, DataverseException {
-        datasetCmd.batchProcessor(d -> d.getLatestVersion().getEnvelopeAsString()).process();
+    public void doCall() {
+        // do nothing
     }
-
 }

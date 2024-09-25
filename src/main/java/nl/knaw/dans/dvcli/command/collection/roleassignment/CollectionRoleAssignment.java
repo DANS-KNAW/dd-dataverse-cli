@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.collection.roleassignment;
 
 import lombok.Getter;
+import nl.knaw.dans.dvcli.command.AbstractCmd;
+import nl.knaw.dans.dvcli.command.collection.CollectionCmd;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
 @Command(name = "role-assignment",
          mixinStandardHelpOptions = true,
          description = "Manage role assignments.")
-public class DatasetRoleAssignment2 extends AbstractCmd {
+@Getter
+public class CollectionRoleAssignment extends AbstractCmd {
     @ParentCommand
-    @Getter
-    private DatasetCmd datasetCmd;
+    private CollectionCmd collectionCmd;
 
     @Override
     public void doCall() {

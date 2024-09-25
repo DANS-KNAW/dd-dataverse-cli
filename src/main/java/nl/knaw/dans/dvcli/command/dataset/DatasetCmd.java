@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.dataset;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.dvcli.action.SingleDatasetOrDatasetsFile;
+import nl.knaw.dans.dvcli.command.AbstractSubcommandContainer;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import picocli.CommandLine.Command;
@@ -38,6 +39,6 @@ public class DatasetCmd extends AbstractSubcommandContainer<DatasetApi> {
 
     @Override
     protected List<Pair<String, DatasetApi>> getItems() throws IOException {
-        return new SingleDatasetOrDatasetsFile(targets, dataverseClient).getDatasets().collect(Collectors.toList());
+        return new SingleDatasetOrDatasetsFile(getTargets(), dataverseClient).getDatasets().collect(Collectors.toList());
     }
 }

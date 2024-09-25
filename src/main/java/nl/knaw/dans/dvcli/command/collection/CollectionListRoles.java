@@ -13,36 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.collection;
 
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
-@Command(name = "create-dataset",
+@Command(name = "list-roles",
          mixinStandardHelpOptions = true,
-         description = "Create a dataset in a dataverse collection.")
-public class CollectionCreateDataset extends AbstractCmd {
+         description = "Get a list of roles defined in a dataverse collection.")
+public class CollectionListRoles extends AbstractCmd {
     @ParentCommand
     private CollectionCmd collectionCmd;
 
-    @Parameters(index = "0", paramLabel = "dataset", description = "A JSON file with the dataset description.")
-    private String dataset;
-
-    @Option(names = { "-m", "--mdkeys" }, paramLabel = "metadataKeys", description = "Maps the names of the metadata blocks to their 'secret' key values")
-    private Map<String, String> metadataKeys = new HashMap<>();
-
     @Override
     public void doCall() throws IOException, DataverseException {
-        collectionCmd.batchProcessor(c ->
-            c.createDataset(Files.readString(Path.of(dataset)), metadataKeys).getEnvelopeAsString()).process();
+        collectionCmd.batchProcessor(c -> c.listRoles().getEnvelopeAsString()).process();
     }
 }

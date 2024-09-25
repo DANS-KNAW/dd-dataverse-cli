@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.collection;
 
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
 
-@Command(name = "list-roles",
+@Command(name = "list-metadata-blocks",
          mixinStandardHelpOptions = true,
-         description = "Get a list of roles defined in a dataverse collection.")
-public class CollectionListRoles extends AbstractCmd {
+         description = "Get a list of metadata blocks defined on a dataverse collection.")
+public class CollectionListMetadataBlocks extends AbstractCmd {
     @ParentCommand
     private CollectionCmd collectionCmd;
 
     @Override
     public void doCall() throws IOException, DataverseException {
-        collectionCmd.batchProcessor(c -> c.listRoles().getEnvelopeAsString()).process();
+        collectionCmd.batchProcessor(c -> c.listMetadataBlocks().getEnvelopeAsString()).process();
     }
 }

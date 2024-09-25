@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.collection;
 
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
 
-@Command(name = "view",
+@Command(name = "delete",
          mixinStandardHelpOptions = true,
-         description = "Get the information of a Dataverse collection.")
-public class CollectionView extends AbstractCmd {
+         description = "Delete a Dataverse collection.")
+public class CollectionDelete extends AbstractCmd {
     @ParentCommand
     private CollectionCmd collectionCmd;
 
     @Override
     public void doCall() throws IOException, DataverseException {
-        collectionCmd.batchProcessor(c -> c.view().getEnvelopeAsString()).process();
+        collectionCmd.batchProcessor(c -> c.delete().getEnvelopeAsString()).process();
     }
 }

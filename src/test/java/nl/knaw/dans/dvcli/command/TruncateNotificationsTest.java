@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 
-public class NotificationTruncateTest extends AbstractCapturingTest {
+public class TruncateNotificationsTest extends AbstractCapturingTest {
 
     @Test
     public void doCall_with_wrong_database_connection_fails() throws Exception {
@@ -41,7 +41,7 @@ public class NotificationTruncateTest extends AbstractCapturingTest {
         var database = Mockito.mock(Database.class);
         doThrow(new SQLException("test database fails to connect")).when(database).connect();
         
-        var userOptions = new NotificationTruncate.UserOptions();
+        var userOptions = new TruncateNotifications.UserOptions();
         userOptions.user = 13;
         userOptions.allUsers = false;
         
@@ -56,7 +56,7 @@ public class NotificationTruncateTest extends AbstractCapturingTest {
     public void doCall_with_negative_numberOfRecordsToKeep_fails() throws Exception {
         var database = Mockito.mock(Database.class);
  
-        var userOptions = new NotificationTruncate.UserOptions();
+        var userOptions = new TruncateNotifications.UserOptions();
         userOptions.user = 13;
         userOptions.allUsers = false;
 
@@ -82,7 +82,7 @@ public class NotificationTruncateTest extends AbstractCapturingTest {
         Mockito.when(database.query(anyString())).thenReturn( fakeQueryOutput );
         Mockito.when(database.update(anyString())).thenReturn( 3,2,1);
         
-        var userOptions = new NotificationTruncate.UserOptions();
+        var userOptions = new TruncateNotifications.UserOptions();
         userOptions.user = 0;
         userOptions.allUsers = true;
         
@@ -113,16 +113,16 @@ public class NotificationTruncateTest extends AbstractCapturingTest {
         verifyNoMoreInteractions(database);
     }
     
-    private static NotificationTruncate getCmd(Database database, int numberOfRecordsToKeep, NotificationTruncate.UserOptions userOptions ) throws NoSuchFieldException, IllegalAccessException {
-        var cmd = new NotificationTruncate(database);
+    private static TruncateNotifications getCmd(Database database, int numberOfRecordsToKeep, TruncateNotifications.UserOptions userOptions ) throws NoSuchFieldException, IllegalAccessException {
+        var cmd = new TruncateNotifications(database);
 
         // set private fields with reflection
         
-        var numberOfRecordsToKeepField = NotificationTruncate.class.getDeclaredField("numberOfRecordsToKeep");
+        var numberOfRecordsToKeepField = TruncateNotifications.class.getDeclaredField("numberOfRecordsToKeep");
         numberOfRecordsToKeepField.setAccessible(true);
         numberOfRecordsToKeepField.set(cmd, numberOfRecordsToKeep);
 
-        var usersField = NotificationTruncate.class.getDeclaredField("users");
+        var usersField = TruncateNotifications.class.getDeclaredField("users");
         usersField.setAccessible(true);
         usersField.set(cmd, userOptions);
         return cmd;

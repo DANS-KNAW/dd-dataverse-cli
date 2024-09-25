@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.collection;
 
 import lombok.NonNull;
 import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.dvcli.action.SingleCollectionOrCollectionsFile;
+import nl.knaw.dans.dvcli.command.AbstractSubcommandContainer;
 import nl.knaw.dans.lib.dataverse.DataverseApi;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import picocli.CommandLine.Command;
@@ -35,7 +36,6 @@ public class CollectionCmd extends AbstractSubcommandContainer<DataverseApi> {
 
     @Override
     protected List<Pair<String, DataverseApi>> getItems() throws IOException {
-        return new SingleCollectionOrCollectionsFile(targets, dataverseClient).getCollections().toList();
+        return new SingleCollectionOrCollectionsFile(getTargets(), dataverseClient).getCollections().toList();
     }
-
 }

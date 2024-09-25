@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.dataset.roleassignment;
 
 import nl.knaw.dans.dvcli.action.ConsoleReport;
 import nl.knaw.dans.dvcli.action.ThrowingFunction;
+import nl.knaw.dans.dvcli.command.AbstractRoleAssignmentSubcommand;
+import nl.knaw.dans.dvcli.command.dataset.DatasetCmd;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import picocli.CommandLine.Command;
@@ -27,23 +29,23 @@ import java.io.IOException;
 @Command(name = "add",
          mixinStandardHelpOptions = true,
          description = "Assign a role to a user in a dataset.")
-public class DatasetRoleAddAssignmentSubcommand extends AbstractRoleAssignmentSubcommand<DatasetCmd, DatasetApi> {
+public class DatasetRoleAssignmentAdd extends AbstractRoleAssignmentSubcommand<DatasetCmd, DatasetApi> {
     @ParentCommand
-    private DatasetRoleAssignment2 datasetRoleAssignment;
+    protected DatasetRoleAssignment datasetRoleAssignment;
 
     @Override
     protected DatasetApi getItem(String pid) {
-        return datasetRoleAssignment.getDatasetCmd().dataverseClient.dataset(pid);
+        return datasetRoleAssignment.getDatasetCmd().getDataverseClient().dataset(pid);
     }
 
-    private static class RoleAssignmentAction implements ThrowingFunction<RoleAssignmentParams<DatasetApi>, String, Exception> {
+    private static class AddAssignmentAction implements ThrowingFunction<RoleAssignmentParams<DatasetApi>, String, Exception> {
         @Override
         public String apply(RoleAssignmentParams<DatasetApi> roleAssignmentParams) throws IOException, DataverseException {
             if (roleAssignmentParams.roleAssignment().isPresent()) {
                 var r = roleAssignmentParams.pid().assignRole(roleAssignmentParams.roleAssignment().get());
                 return r.getEnvelopeAsString();
             }
-            return "There was no role to assign.";
+            throw new IllegalArgumentException("There was no role to assign.");
         }
     }
 
@@ -51,7 +53,7 @@ public class DatasetRoleAddAssignmentSubcommand extends AbstractRoleAssignmentSu
     public void doCall() throws IOException, DataverseException {
         datasetRoleAssignment.getDatasetCmd().<RoleAssignmentParams<DatasetApi>> paramsBatchProcessorBuilder()
             .labeledItems(getRoleAssignmentParams(datasetRoleAssignment.getDatasetCmd()))
-            .action(new RoleAssignmentAction())
+            .action(new AddAssignmentAction())
             .report(new ConsoleReport<>())
             .build()
             .process();

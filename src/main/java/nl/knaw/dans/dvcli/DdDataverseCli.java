@@ -18,30 +18,34 @@ package nl.knaw.dans.dvcli;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.dvcli.action.Database;
-import nl.knaw.dans.dvcli.command.CollectionCmd;
-import nl.knaw.dans.dvcli.command.CollectionCreateDataset;
-import nl.knaw.dans.dvcli.command.CollectionDelete;
-import nl.knaw.dans.dvcli.command.CollectionGetContents;
-import nl.knaw.dans.dvcli.command.CollectionGetStorageSize;
-import nl.knaw.dans.dvcli.command.CollectionImportDataset;
-import nl.knaw.dans.dvcli.command.CollectionIsMetadataBlocksRoot;
-import nl.knaw.dans.dvcli.command.CollectionListMetadataBlocks;
-import nl.knaw.dans.dvcli.command.CollectionListRoles;
-import nl.knaw.dans.dvcli.command.CollectionPublish;
-import nl.knaw.dans.dvcli.command.CollectionRoleAssignment;
-import nl.knaw.dans.dvcli.command.CollectionSetMetadataBlocksRoot;
-import nl.knaw.dans.dvcli.command.CollectionView;
-import nl.knaw.dans.dvcli.command.DatasetCmd;
-import nl.knaw.dans.dvcli.command.DatasetDeleteDraft;
-import nl.knaw.dans.dvcli.command.DatasetGetFiles;
-import nl.knaw.dans.dvcli.command.DatasetGetLatestVersion;
-import nl.knaw.dans.dvcli.command.DatasetGetVersion;
-import nl.knaw.dans.dvcli.command.DatasetPublish;
-import nl.knaw.dans.dvcli.command.DatasetRoleAssignment2;
-import nl.knaw.dans.dvcli.command.DatasetRoleAddAssignmentSubcommand;
-import nl.knaw.dans.dvcli.command.DatasetRoleAssignmentList;
-import nl.knaw.dans.dvcli.command.DatasetValidateFiles;
-import nl.knaw.dans.dvcli.command.NotificationTruncate;
+import nl.knaw.dans.dvcli.command.TruncateNotifications;
+import nl.knaw.dans.dvcli.command.collection.CollectionCmd;
+import nl.knaw.dans.dvcli.command.collection.CollectionCreateDataset;
+import nl.knaw.dans.dvcli.command.collection.CollectionDelete;
+import nl.knaw.dans.dvcli.command.collection.CollectionGetContents;
+import nl.knaw.dans.dvcli.command.collection.CollectionGetStorageSize;
+import nl.knaw.dans.dvcli.command.collection.CollectionImportDataset;
+import nl.knaw.dans.dvcli.command.collection.CollectionIsMetadataBlocksRoot;
+import nl.knaw.dans.dvcli.command.collection.CollectionListMetadataBlocks;
+import nl.knaw.dans.dvcli.command.collection.CollectionListRoles;
+import nl.knaw.dans.dvcli.command.collection.CollectionPublish;
+import nl.knaw.dans.dvcli.command.collection.CollectionSetMetadataBlocksRoot;
+import nl.knaw.dans.dvcli.command.collection.CollectionView;
+import nl.knaw.dans.dvcli.command.collection.roleassignment.CollectionRoleAssignment;
+import nl.knaw.dans.dvcli.command.collection.roleassignment.CollectionRoleAssignmentAdd;
+import nl.knaw.dans.dvcli.command.collection.roleassignment.CollectionRoleAssignmentList;
+import nl.knaw.dans.dvcli.command.collection.roleassignment.CollectionRoleAssignmentRemove;
+import nl.knaw.dans.dvcli.command.dataset.DatasetCmd;
+import nl.knaw.dans.dvcli.command.dataset.DatasetDeleteDraft;
+import nl.knaw.dans.dvcli.command.dataset.DatasetGetFiles;
+import nl.knaw.dans.dvcli.command.dataset.DatasetGetLatestVersion;
+import nl.knaw.dans.dvcli.command.dataset.DatasetGetVersion;
+import nl.knaw.dans.dvcli.command.dataset.DatasetPublish;
+import nl.knaw.dans.dvcli.command.dataset.DatasetValidateFiles;
+import nl.knaw.dans.dvcli.command.dataset.roleassignment.DatasetRoleAssignment;
+import nl.knaw.dans.dvcli.command.dataset.roleassignment.DatasetRoleAssignmentAdd;
+import nl.knaw.dans.dvcli.command.dataset.roleassignment.DatasetRoleAssignmentList;
+import nl.knaw.dans.dvcli.command.dataset.roleassignment.DatasetRoleAssignmentRemove;
 import nl.knaw.dans.dvcli.config.DdDataverseCliConfig;
 import nl.knaw.dans.lib.util.AbstractCommandLineApp;
 import nl.knaw.dans.lib.util.PicocliVersionProvider;
@@ -79,7 +83,10 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
                 .addSubcommand(new CollectionListMetadataBlocks())
                 .addSubcommand(new CollectionListRoles())
                 .addSubcommand(new CollectionPublish())
-                .addSubcommand(new CollectionRoleAssignment())
+                .addSubcommand(new CommandLine(new CollectionRoleAssignment())
+                    .addSubcommand(new CollectionRoleAssignmentList())
+                    .addSubcommand(new CollectionRoleAssignmentAdd())
+                    .addSubcommand(new CollectionRoleAssignmentRemove()))
                 .addSubcommand(new CollectionSetMetadataBlocksRoot())
                 .addSubcommand(new CollectionView()))
             .addSubcommand(new CommandLine(new DatasetCmd(dataverseClient))
@@ -88,12 +95,13 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
                 .addSubcommand(new DatasetGetLatestVersion())
                 .addSubcommand(new DatasetGetVersion())
                 .addSubcommand(new DatasetPublish())
-                .addSubcommand(new CommandLine(new DatasetRoleAssignment2())
+                .addSubcommand(new CommandLine(new DatasetRoleAssignment())
                     .addSubcommand(new DatasetRoleAssignmentList())
-                    .addSubcommand(new DatasetRoleAddAssignmentSubcommand()))
+                    .addSubcommand(new DatasetRoleAssignmentAdd())
+                    .addSubcommand(new DatasetRoleAssignmentRemove()))
                 .addSubcommand(new DatasetValidateFiles())
             )
-            .addSubcommand(new CommandLine(new NotificationTruncate(database)));
+            .addSubcommand(new CommandLine(new TruncateNotifications(database)));
         log.debug("Configuring command line");
     }
 }

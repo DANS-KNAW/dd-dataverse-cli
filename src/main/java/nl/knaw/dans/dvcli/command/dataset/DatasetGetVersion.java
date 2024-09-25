@@ -13,23 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.dataset;
 
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.IOException;
 
-@Command(name = "delete",
+@Command(name = "get-version",
          mixinStandardHelpOptions = true,
-         description = "Delete a Dataverse collection.")
-public class CollectionDelete extends AbstractCmd {
+         description = "Returns an object containing the dataset version metadata.")
+public class DatasetGetVersion extends AbstractCmd {
     @ParentCommand
-    private CollectionCmd collectionCmd;
+    private DatasetCmd datasetCmd;
+
+    @ArgGroup(exclusive = true, multiplicity = "1")
+    VersionInfo versionInfo;
+
+    static class VersionInfo {
+        @Parameters(description = "Specified a version to retrieve.")
+        String version = "";
+        @Option(names = "--all", description = "Get all versions")
+        boolean allVersions;
+    }
 
     @Override
     public void doCall() throws IOException, DataverseException {
-        collectionCmd.batchProcessor(c -> c.delete().getEnvelopeAsString()).process();
+        datasetCmd.batchProcessor(d ->
+                versionInfo.allVersions ? d.getAllVersions().getEnvelopeAsString() : d.getVersion(versionInfo.version).getEnvelopeAsString()
+            )
+            .process();
     }
 }

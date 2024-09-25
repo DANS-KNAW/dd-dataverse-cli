@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.dvcli.command;
+package nl.knaw.dans.dvcli.command.dataset;
 
 import nl.knaw.dans.dvcli.action.ConsoleReport;
 import nl.knaw.dans.dvcli.action.Pair;
 import nl.knaw.dans.dvcli.action.SingleIdOrIdsFile;
 import nl.knaw.dans.dvcli.action.ThrowingFunction;
+import nl.knaw.dans.dvcli.command.AbstractCmd;
 import nl.knaw.dans.lib.dataverse.AdminApi;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import picocli.CommandLine.Command;
@@ -35,8 +36,8 @@ public class DatasetValidateFiles extends AbstractCmd {
     private DatasetCmd datasetCmd;
 
     protected List<Pair<String, IdParam>> getIds() throws IOException {
-        List<String> pids = new SingleIdOrIdsFile(datasetCmd.targets, SingleIdOrIdsFile.DEFAULT_TARGET_PLACEHOLDER).getPids().toList();
-        return pids.stream().map(p -> new Pair<>(p, new IdParam(datasetCmd.dataverseClient.admin(), p))).toList();
+        List<String> pids = new SingleIdOrIdsFile(datasetCmd.getTargets(), SingleIdOrIdsFile.DEFAULT_TARGET_PLACEHOLDER).getPids().toList();
+        return pids.stream().map(p -> new Pair<>(p, new IdParam(datasetCmd.getDataverseClient().admin(), p))).toList();
     }
 
     protected record IdParam(AdminApi admin, String id) {
