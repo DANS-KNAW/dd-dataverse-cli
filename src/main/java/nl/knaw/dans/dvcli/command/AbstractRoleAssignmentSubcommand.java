@@ -21,7 +21,6 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -33,8 +32,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Command
-public abstract class AbstractAssignmentRole<CMD extends AbstractSubcommandContainer<?>, API> extends AbstractCmd {
+/**
+ * Abstract class for subcommands that assign roles to items.
+ *
+ * @param <C> the type of the subcommand container
+ * @param <A> the type of API object that gives the command access to the item
+ */
+public abstract class AbstractRoleAssignmentSubcommand<C extends AbstractSubcommandContainer<?>, A> extends AbstractCmd {
 
     static class CommandParameter {
         @Parameters(description = "Alias and role assignee (example: @dataverseAdmin=contributor)")
@@ -60,23 +64,23 @@ public abstract class AbstractAssignmentRole<CMD extends AbstractSubcommandConta
         return Optional.empty();
     }
 
-    private List<Pair<String, RoleAssignmentParams<API>>> readFromFile(CMD cmd) throws IOException {
+    private List<Pair<String, RoleAssignmentParams<A>>> readFromFile(C cmd) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(commandParameter.parameterFile);
             CSVParser csvParser = new CSVParser(reader, CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader("PID", "ASSIGNEE", "ROLE")
                 .setSkipHeaderRecord(true)
                 .build())) {
 
-            List<Pair<String, RoleAssignmentParams<API>>> result = new ArrayList<>();
+            List<Pair<String, RoleAssignmentParams<A>>> result = new ArrayList<>();
 
             for (CSVRecord csvRecord : csvParser) {
                 var pid = csvRecord.get("PID");
-                API api = getItem(pid);
+                A api = getItem(pid);
                 RoleAssignment roleAssignment = new RoleAssignment();
                 roleAssignment.setAssignee(csvRecord.get("ASSIGNEE"));
                 roleAssignment.setRole(csvRecord.get("ROLE"));
 
-                RoleAssignmentParams<API> params = new RoleAssignmentParams<>(api, Optional.of(roleAssignment));
+                RoleAssignmentParams<A> params = new RoleAssignmentParams<>(api, Optional.of(roleAssignment));
                 result.add(new Pair<>(pid, params));
             }
 
@@ -84,9 +88,9 @@ public abstract class AbstractAssignmentRole<CMD extends AbstractSubcommandConta
         }
     }
 
-    protected abstract API getItem(String pid);
+    protected abstract A getItem(String pid);
 
-    protected List<Pair<String, RoleAssignmentParams<API>>> getRoleAssignmentParams(CMD cmd) throws IOException {
+    protected List<Pair<String, RoleAssignmentParams<A>>> getRoleAssignmentParams(C cmd) throws IOException {
         if (commandParameter.parameterFile != null) {
             return readFromFile(cmd);
         }
@@ -94,7 +98,7 @@ public abstract class AbstractAssignmentRole<CMD extends AbstractSubcommandConta
             var items = cmd.getItems();
             return items.stream()
                 .map(p -> {
-                    var second = new RoleAssignmentParams<API>((API) p.getSecond(), readFromCommandLine());
+                    var second = new RoleAssignmentParams<A>((A) p.getSecond(), readFromCommandLine());
                     return new Pair<>(p.getFirst(), second);
                 })
                 .toList();

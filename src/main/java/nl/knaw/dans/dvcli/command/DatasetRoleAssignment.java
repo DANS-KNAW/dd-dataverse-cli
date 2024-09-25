@@ -18,6 +18,8 @@ package nl.knaw.dans.dvcli.command;
 
 import nl.knaw.dans.dvcli.action.ConsoleReport;
 import nl.knaw.dans.dvcli.action.ThrowingFunction;
+import nl.knaw.dans.dvcli.command.DatasetRoleAssignment.DatasetAssignRoleAssignmentSubcommand;
+import nl.knaw.dans.dvcli.command.DatasetRoleAssignment.DatasetDeleteRoleAssignmentSubcommand;
 import nl.knaw.dans.lib.dataverse.DatasetApi;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import nl.knaw.dans.lib.dataverse.model.RoleAssignment;
@@ -31,7 +33,7 @@ import java.util.Optional;
 @Command(name = "role-assignment",
          mixinStandardHelpOptions = true,
          description = "Manage role assignments.",
-         subcommands = { DatasetRoleAssignment.DatasetListRoleAssignments.class, DatasetRoleAssignment.DatasetAssignRole.class, DatasetRoleAssignment.DatasetDeleteRole.class })
+         subcommands = { DatasetRoleAssignment.DatasetListRoleAssignments.class, DatasetAssignRoleAssignmentSubcommand.class, DatasetDeleteRoleAssignmentSubcommand.class })
 public class DatasetRoleAssignment extends AbstractCmd {
     @ParentCommand
     static private DatasetCmd datasetCmd;
@@ -50,7 +52,7 @@ public class DatasetRoleAssignment extends AbstractCmd {
     @Command(name = "add",
              mixinStandardHelpOptions = true,
              description = "Assign a role to a user in a dataset.")
-    static class DatasetAssignRole extends AbstractAssignmentRole<DatasetCmd, DatasetApi> {
+    static class DatasetAssignRoleAssignmentSubcommand extends AbstractRoleAssignmentSubcommand<DatasetCmd, DatasetApi> {
         @Override
         protected DatasetApi getItem(String pid) {
             return datasetCmd.dataverseClient.dataset(pid);
@@ -82,7 +84,7 @@ public class DatasetRoleAssignment extends AbstractCmd {
     @Command(name = "remove",
              mixinStandardHelpOptions = true,
              description = "remove role assignment from specified dataset(s)")
-    static class DatasetDeleteRole extends AbstractAssignmentRole<DatasetCmd, DatasetApi> {
+    static class DatasetDeleteRoleAssignmentSubcommand extends AbstractRoleAssignmentSubcommand<DatasetCmd, DatasetApi> {
 
         @Override
         protected DatasetApi getItem(String pid) {

@@ -18,6 +18,8 @@ package nl.knaw.dans.dvcli.command;
 
 import nl.knaw.dans.dvcli.action.ConsoleReport;
 import nl.knaw.dans.dvcli.action.ThrowingFunction;
+import nl.knaw.dans.dvcli.command.CollectionRoleAssignment.CollectionAssignRoleAssignmentSubcommand;
+import nl.knaw.dans.dvcli.command.CollectionRoleAssignment.CollectionDeleteRoleAssignmentSubcommand;
 import nl.knaw.dans.lib.dataverse.DataverseApi;
 import nl.knaw.dans.lib.dataverse.DataverseException;
 import nl.knaw.dans.lib.dataverse.model.RoleAssignment;
@@ -31,7 +33,7 @@ import java.util.Optional;
 @Command(name = "role-assignment",
          mixinStandardHelpOptions = true,
          description = "Manage role assignments.",
-         subcommands = { CollectionRoleAssignment.CollectionListRoleAssignments.class, CollectionRoleAssignment.CollectionAssignRole.class, CollectionRoleAssignment.CollectionDeleteRole.class })
+         subcommands = { CollectionRoleAssignment.CollectionListRoleAssignments.class, CollectionAssignRoleAssignmentSubcommand.class, CollectionDeleteRoleAssignmentSubcommand.class })
 public class CollectionRoleAssignment extends AbstractCmd {
     @ParentCommand
     static private CollectionCmd collectionCmd;
@@ -50,7 +52,7 @@ public class CollectionRoleAssignment extends AbstractCmd {
     @Command(name = "add",
              mixinStandardHelpOptions = true,
              description = "Assign a role to a user in a Dataverse collection.")
-    static class CollectionAssignRole extends AbstractAssignmentRole<CollectionCmd, DataverseApi> {
+    static class CollectionAssignRoleAssignmentSubcommand extends AbstractRoleAssignmentSubcommand<CollectionCmd, DataverseApi> {
         @Override
         protected DataverseApi getItem(String pid) {
             return collectionCmd.dataverseClient.dataverse(pid);
@@ -81,7 +83,7 @@ public class CollectionRoleAssignment extends AbstractCmd {
     @Command(name = "remove",
              mixinStandardHelpOptions = true,
              description = "remove a role assignment from the specified dataverse collection")
-    static class CollectionDeleteRole extends AbstractAssignmentRole<CollectionCmd, DataverseApi> {
+    static class CollectionDeleteRoleAssignmentSubcommand extends AbstractRoleAssignmentSubcommand<CollectionCmd, DataverseApi> {
 
         @Override
         protected DataverseApi getItem(String pid) {
@@ -108,7 +110,7 @@ public class CollectionRoleAssignment extends AbstractCmd {
         public void doCall() throws IOException, DataverseException {
             collectionCmd.<RoleAssignmentParams<DataverseApi>> paramsBatchProcessorBuilder()
                 .labeledItems(getRoleAssignmentParams(collectionCmd))
-                .action(new CollectionRoleAssignment.CollectionDeleteRole.RoleAssignmentAction())
+                .action(new CollectionDeleteRoleAssignmentSubcommand.RoleAssignmentAction())
                 .report(new ConsoleReport<>())
                 .build()
                 .process();

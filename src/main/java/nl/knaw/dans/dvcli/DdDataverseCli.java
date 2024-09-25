@@ -38,6 +38,7 @@ import nl.knaw.dans.dvcli.command.DatasetGetLatestVersion;
 import nl.knaw.dans.dvcli.command.DatasetGetVersion;
 import nl.knaw.dans.dvcli.command.DatasetPublish;
 import nl.knaw.dans.dvcli.command.DatasetRoleAssignment2;
+import nl.knaw.dans.dvcli.command.DatasetRoleAddAssignmentSubcommand;
 import nl.knaw.dans.dvcli.command.DatasetRoleAssignmentList;
 import nl.knaw.dans.dvcli.command.DatasetValidateFiles;
 import nl.knaw.dans.dvcli.command.NotificationTruncate;
@@ -88,7 +89,8 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
                 .addSubcommand(new DatasetGetVersion())
                 .addSubcommand(new DatasetPublish())
                 .addSubcommand(new CommandLine(new DatasetRoleAssignment2())
-                    .addSubcommand(new DatasetRoleAssignmentList()))
+                    .addSubcommand(new DatasetRoleAssignmentList())
+                    .addSubcommand(new DatasetRoleAddAssignmentSubcommand()))
                 .addSubcommand(new DatasetValidateFiles())
             )
             .addSubcommand(new CommandLine(new NotificationTruncate(database)));
