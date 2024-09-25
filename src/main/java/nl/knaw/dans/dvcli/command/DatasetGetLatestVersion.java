@@ -15,24 +15,23 @@
  */
 package nl.knaw.dans.dvcli.command;
 
-import lombok.RequiredArgsConstructor;
+import nl.knaw.dans.dvcli.command.dataset.DatasetCmd;
 import nl.knaw.dans.lib.dataverse.DataverseException;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.ParentCommand;
 
-import java.util.concurrent.Callable;
+import java.io.IOException;
 
-@RequiredArgsConstructor
-public abstract class AbstractCmd implements Callable<Integer> {
+@Command(name = "get-latest-version",
+         mixinStandardHelpOptions = true,
+         description = "A JSON object that starts at the dataset level, most fields are replicated at the dataset version level.")
+public class DatasetGetLatestVersion extends AbstractCmd {
+    @ParentCommand
+    private DatasetCmd datasetCmd;
+
     @Override
-    public Integer call() throws Exception {
-        try {
-            doCall();
-            return 0;
-        }
-        catch (DataverseException e) {
-            System.err.println(e.getMessage());
-            return 1;
-        }
+    public void doCall() throws IOException, DataverseException {
+        datasetCmd.batchProcessor(d -> d.getLatestVersion().getEnvelopeAsString()).process();
     }
 
-    public abstract void doCall() throws Exception;
 }
