@@ -37,6 +37,7 @@ import nl.knaw.dans.dvcli.command.collection.roleassignment.CollectionRoleAssign
 import nl.knaw.dans.dvcli.command.collection.roleassignment.CollectionRoleAssignmentRemove;
 import nl.knaw.dans.dvcli.command.dataset.DatasetCmd;
 import nl.knaw.dans.dvcli.command.dataset.DatasetDeleteDraft;
+import nl.knaw.dans.dvcli.command.dataset.DatasetDeleteMetadata;
 import nl.knaw.dans.dvcli.command.dataset.DatasetGetFiles;
 import nl.knaw.dans.dvcli.command.dataset.DatasetGetLatestVersion;
 import nl.knaw.dans.dvcli.command.dataset.DatasetGetVersion;
@@ -95,6 +96,7 @@ public class DdDataverseCli extends AbstractCommandLineApp<DdDataverseCliConfig>
                 .addSubcommand(new DatasetGetLatestVersion())
                 .addSubcommand(new DatasetGetVersion())
                 .addSubcommand(new DatasetPublish())
+                .addSubcommand(new DatasetDeleteMetadata())
                 .addSubcommand(new CommandLine(new DatasetRoleAssignment())
                     .addSubcommand(new DatasetRoleAssignmentList())
                     .addSubcommand(new DatasetRoleAssignmentAdd())
